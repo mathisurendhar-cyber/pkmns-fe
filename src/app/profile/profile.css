@@ -1,0 +1,12 @@
+.profile-page { font-family: 'Poppins', sans-serif; background:#f2f6fb; margin:0;}
+    .profile-wrap { max-width:430px; margin:60px auto; background:#fff; border-radius:14px; padding:42px 34px; box-shadow:0 6px 25px #0001; }
+    .profile-pic { width:94px; height:94px; border-radius:50%; object-fit:cover; display:block; margin:0 auto 18px auto; }
+    .profile-title { font-size:1.32em; font-weight:700; margin-bottom:3px; text-align:center; color:#0052cc; }
+    .profile-field { margin-bottom:14px; }
+    label { font-weight:600; color:#3d4760; margin-bottom:4px; display:block; }
+    input[type="text"], input[type="email"] { width:100%; padding:7px; border-radius:5px; border:1px solid #d4d7eb; font-size:1.05em; }
+    #photoInput { margin-bottom:14px; }
+    .button-row { text-align:center; margin-top:22px; }
+    button, .back-btn { background:#0052cc; color:white; padding:10px 25px; font-weight:700; border-radius:8px; font-size:1em; border:none; cursor:pointer; }
+    button:hover, .back-btn:hover { background:#003d99; }
+    .back-btn { text-decoration:none; display:inline-block; }

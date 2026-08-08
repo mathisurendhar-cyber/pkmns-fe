@@ -1,0 +1,46 @@
+.edit-member-page { font-family: 'Poppins', sans-serif; background:#ecf1fa; margin:0; padding:30px; }
+    .container { max-width: 400px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 6px 20px #0002; }
+    .profile-pic { width: 64px; height: 64px; border-radius: 40%; object-fit: cover; display: block; margin: 0 auto 20px; }
+    label { display: block; margin: 10px 0 6px 0; font-weight: 600; }
+    input, select { width: 100%; padding: 8px 10px; border-radius: 5px; border: 1px solid #ccc; }
+    button { margin-top: 15px; width: 100%; padding: 12px; background: #0052cc; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    button:hover { background: #003d99; }
+   .home-float{
+  position: fixed;
+  right: 18px;
+  bottom: 20px;
+  z-index: 2500;
+}
+
+.home-float a{
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+}
+
+.home-float a:hover{
+  transform: translateY(-4px) scale(1.08);
+  box-shadow: 0 16px 36px rgba(0,0,0,0.6);
+  filter: brightness(1.08);
+}
+
+.home-float a img{
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display:block;
+}
+
+@media (max-width:600px){
+  .home-float{
+    right:14px;
+    bottom:16px;
+  }
+}

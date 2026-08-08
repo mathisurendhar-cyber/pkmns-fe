@@ -1,14 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Add News</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
-<style>
-  *{box-sizing:border-box;margin:0;padding:0;}
+*{box-sizing:border-box;margin:0;padding:0;}
 
-  body{
+  .news-page{
     font-family:'Poppins',sans-serif;
     background:radial-gradient(circle at top,#4f46e5,#020617);
     min-height:100vh;
@@ -197,7 +189,7 @@
   }
 
   @media(max-width:480px){
-    body{padding:18px 10px;}
+    .news-page{padding:18px 10px;}
     .title{font-size:1.35rem;}
   }
    .home-float{
@@ -240,157 +232,3 @@
     bottom:16px;
   }
 }
-
-</style>
-
-<script>
-window.API_BASE = window.API_BASE || (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:3001';
-(function() {
-  var origFetch = window.fetch;
-  window.fetch = function(input, init) {
-    if (typeof input === 'string' && input.startsWith('/api/')) {
-      input = window.API_BASE + input;
-    } else if (typeof input === 'string' && input.startsWith('/uploads/')) {
-      input = window.API_BASE + input;
-    }
-    return origFetch.call(this, input, init);
-  };
-})();
-</script>
-
-</head>
-<div class="home-float">
-    <a href="/" aria-label="Go to home">
-      <img src="/img/home.png" alt="Home" />
-    </a>
-  </div>
-  
-
-<body>
-  <div class="page">
-    <div class="info">
-      <div class="badge"><span></span> Admin panel · News</div>
-      <div class="title">Add News</div>
-      <div class="subtitle">Publish announcements, meeting notes, or important updates to the community.</div>
-      <div class="pill-row">
-        <div class="pill">Required: title & description</div>
-        <div class="pill">Optional: image / MP4</div>
-      </div>
-      <div class="note-box">
-        Keep messages short and clear. Media will appear above the text on the public news page.
-      </div>
-    </div>
-
-    <div class="form-wrap">
-      <form id="newsForm" enctype="multipart/form-data">
-        <div>
-          <label>Title</label>
-          <input type="text" name="title" placeholder="News title" required />
-        </div>
-
-        <div>
-          <label>Description</label>
-          <textarea name="content" rows="5" placeholder="News description" required></textarea>
-        </div>
-
-        <div>
-          <label>Media (optional)</label>
-          <input type="file" name="media" accept="image/*,video/mp4" />
-          <div class="file-note">JPEG / PNG image or MP4 video, up to 100 MB.</div>
-          <div id="previewWrap"></div>
-        </div>
-
-        <div class="actions">
-          <button type="submit">Post News</button>
-        </div>
-        <p id="msg"></p>
-      </form>
-    </div>
-  </div>
-
-  <script>
-document.addEventListener('DOMContentLoaded', () => {
-
-  // 🔐 Admin protection
-  const stored = localStorage.getItem('currentUser');
-  if (!stored) {
-    window.location.replace('login.html');
-    return;
-  }
-
-  const form = document.getElementById('newsForm');
-  const mediaInput = document.querySelector('input[name="media"]');
-  const previewWrap = document.getElementById('previewWrap');
-  const msg = document.getElementById('msg');
-
-  // ✅ Safety check
-  if (!form || !mediaInput) {
-    console.error('Form or media input not found');
-    return;
-  }
-
-  // ---------- Preview ----------
-  mediaInput.addEventListener('change', () => {
-    previewWrap.innerHTML = '';
-    const file = mediaInput.files[0];
-    if (!file) return;
-
-    if (file.type.startsWith('image/')) {
-      const img = document.createElement('img');
-      img.src = URL.createObjectURL(file);
-      img.className = 'preview';
-      previewWrap.appendChild(img);
-    } else if (file.type.startsWith('video/')) {
-      const video = document.createElement('video');
-      video.src = URL.createObjectURL(file);
-      video.controls = true;
-      video.className = 'preview';
-      previewWrap.appendChild(video);
-    }
-  });
-
-  // ---------- Submit ----------
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const formData = new FormData(form);
-
-    const title = formData.get('title')?.trim();
-    const content = formData.get('content')?.trim();
-
-    if (!title || !content) {
-      alert('Title and description required');
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/news', {
-        method: 'POST',
-        body: formData
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        msg.innerText = 'News posted successfully';
-        setTimeout(() => {
-          window.location.href = '/newslist';
-        }, 800);
-      } else {
-        msg.innerText = data.message || 'Failed to post news';
-      }
-
-    } catch (err) {
-      console.error(err);
-      msg.innerText = 'Server error';
-    }
-  });
-
-});
-</script>
-
-</body>
-
-
-
-</html>

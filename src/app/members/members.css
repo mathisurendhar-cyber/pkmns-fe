@@ -1,14 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Members - Sri Ambal Nagar Peoples Welfare Association</title>
-
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet"/>
-
-  <style>
-    * { box-sizing: border-box; }
+* { box-sizing: border-box; }
     :root{
       --bg1:#fef3c7;
       --bg2:#dbeafe;
@@ -16,7 +6,7 @@
       --accent2:#3b82f6;
       --accent3:#ec4899;
     }
-    body{
+    .members-page{
       margin:0;
       font-family:'Poppins',sans-serif;
       background:linear-gradient(135deg,var(--bg1),var(--bg2));
@@ -60,7 +50,7 @@
       display:none;font-size:26px;cursor:pointer;background:#fff;
       color:#002d80;border:none;border-radius:10px;padding:6px 12px;
     }
-    body>*:not(header){padding-top:100px;}
+    .members-page>*:not(header){padding-top:100px;}
 
     /* MEMBERS HERO */
     .members-hero {
@@ -178,116 +168,3 @@
         padding:0 12px 40px;
       }
     }
-  </style>
-
-<script>
-window.API_BASE = window.API_BASE || (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:3001';
-(function() {
-  var origFetch = window.fetch;
-  window.fetch = function(input, init) {
-    if (typeof input === 'string' && input.startsWith('/api/')) {
-      input = window.API_BASE + input;
-    } else if (typeof input === 'string' && input.startsWith('/uploads/')) {
-      input = window.API_BASE + input;
-    }
-    return origFetch.call(this, input, init);
-  };
-})();
-</script>
-
-</head>
-<body>
-
-  <!-- COMMON HEADER -->
-  <header>
-    <div class="header-container">
-      <div class="brand-flex">
-        <img src="/img/logo.png" alt="Logo"/>
-        <span>Sri AmbalNagar Makkal Nalvazhu Sangam</span>
-      </div>
-      <nav>
-        <ul>
-          <a href="/">Home</a>
-          <a href="/about">About Us</a>
-          <a href="/members">Members</a>
-          <a href="/events">Events</a>
-          <a href="/contact">Contact Us</a>
-          <a href="/login">Login</a>
-
-        </ul>
-      </nav>
-      <button class="menu-toggle">&#9776;</button>
-    </div>
-  </header>
-
-  <section class="members-hero">
-    <h1>Members Directory</h1>
-    <p>Listing of active members with photos and details.</p>
-  </section>
-
-  <div class="members-grid" id="membersGrid"></div>
-
-  <footer>
-    <p>&copy; 2025 Sri Ambal Nagar Peoples Welfare Association. All rights reserved.</p>
-  </footer>
-
-  <script>
-  // -------------------------------
-  // Mobile nav toggle
-  // -------------------------------
-  const menuToggle = document.querySelector('.menu-toggle');
-  const navUl = document.querySelector('nav ul');
-
-  menuToggle.addEventListener('click', () => {
-    navUl.classList.toggle('show');
-    menuToggle.textContent = navUl.classList.contains('show') ? '×' : '☰';
-  });
-
-  // -------------------------------
-  // Members list load (PUBLIC)
-  // -------------------------------
-  const membersGrid = document.getElementById('membersGrid');
-
-  fetch('/api/getUsers')
-    .then(res => res.json())
-    .then(users => {
-      membersGrid.innerHTML = '';
-
-      users
-        .filter(u => (u.role || 'admin') === 'member')
-        .forEach(u => {
-
-          const card = document.createElement('div');
-          card.className = 'member-card';
-
-          const photo = u.photo_url || 'img/profile-default.png';
-
-          card.innerHTML = `
-            <img src="${photo}"
-                 alt="${u.username} photo"
-                 class="member-image"
-                 onerror="this.src="/img/profile-default.png'">
-
-            <div class="member-info">
-              <h3>${u.username}</h3>
-              <p><strong>Phone:</strong> ${u.phone || '-'}</p>
-              <p><strong>Address:</strong> ${u.address || '-'}</p>
-              <p><strong>Joined:</strong> ${u.joined || '-'}</p>
-            </div>
-          `;
-
-          membersGrid.appendChild(card);
-        });
-
-      if (!membersGrid.children.length) {
-        membersGrid.innerHTML = '<p>No members found.</p>';
-      }
-    })
-    .catch(() => {
-      membersGrid.innerHTML = '<p>Unable to load members.</p>';
-    });
-</script>
-
-
-</body>
-</html>

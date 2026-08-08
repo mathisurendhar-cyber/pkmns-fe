@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import './servicework/servicework.css';
 
 export const metadata: Metadata = {
   title: 'AmbalNagar Makkal Nalvazhu Sangam',

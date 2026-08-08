@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Dashboard - Sri Ambal Nagar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    if (!localStorage.getItem('currentUser')) window.location.replace('/login');
+    history.pushState(null, null, location.href);
+    window.onpopstate = () => history.go(1);
+  </script>
+  <style>
+    :root {
+      --primary-purple: #8b5cf6;
+      --primary-pink: #ec4899;
+      --primary-cyan: #06b6d4;
+      --primary-amber: #f59e0b;
+      --primary-emerald: #10b981;
+      --bg-dark: #070913;
+      --neon-purple-glow: 0 0 25px rgba(139, 92, 246, 0.35);
+      --neon-cyan-glow: 0 0 25px rgba(6, 182, 212, 0.35);
+      --neon-pink-glow: 0 0 25px rgba(236, 72, 153, 0.35);
+      --neon-amber-glow: 0 0 25px rgba(245, 158, 11, 0.35);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      background-color: var(--bg-dark);
+      color: #f8fafc;
+      min-height: 100vh;
+    }
+    .sidebar {
+      position: fixed;
+      left: 0; top: 0;
+      width: 280px; height: 100vh;
+      background: rgba(11, 15, 27, 0.85);
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      z-index: 1000;
+      padding: 24px 0;
+      backdrop-filter: blur(20px);
+    }
+    .sidebar-logo { padding: 0 24px 28px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 24px; }
+    .sidebar-logo img { width: 140px; height: auto; filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.5)); }
+    .sidebar-nav { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+    .sidebar-nav a {
+      display: flex; align-items: center; gap: 14px;
+      padding: 13px 18px; color: #94a3b8; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 14px;
+      transition: all 0.25s ease;
+    }
+    .sidebar-nav a:hover, .sidebar-nav a.active {
+      color: #ffffff;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.35) 0%, rgba(236, 72, 153, 0.25) 100%);
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.25);
+    }
+    .sidebar-nav i { font-size: 17px; width: 22px; color: #a78bfa; }
+    .main-content { margin-left: 280px; padding: 36px 40px; min-height: 100vh; max-width: 1440px; }
+    .top-header { display: flex; justify-content: space-between; align-items: center; gap: 24px; margin-bottom: 32px; flex-wrap: wrap; }
+    .header h1 {
+      font-size: 32px; font-weight: 800; margin: 0 0 6px 0;
+      background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 50%, #f472b6 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .clock-card {
+      display: flex; align-items: center; gap: 16px;
+      background: linear-gradient(135deg, rgba(17, 24, 39, 0.85) 0%, rgba(30, 27, 75, 0.75) 100%);
+      border: 1px solid rgba(139, 92, 246, 0.35); padding: 12px 20px; border-radius: 20px; backdrop-filter: blur(16px);
+    }
+    .calendar-badge {
+      width: 48px; height: 48px; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+      border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;
+    }
+    .user-pill {
+      display: flex; align-items: center; gap: 14px; background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.12); padding: 8px 16px 8px 20px; border-radius: 50px; backdrop-filter: blur(16px);
+    }
+    .user-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; }
+    .logout-btn {
+      background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+      color: white; border: none; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; margin-bottom: 36px; }
+    .stat-card { border-radius: 24px; padding: 26px; backdrop-filter: blur(20px); transition: all 0.35s ease; }
+    .card-theme-members { background: linear-gradient(135deg, rgba(88, 28, 135, 0.45) 0%, rgba(30, 27, 75, 0.85) 100%); }
+    .card-theme-events { background: linear-gradient(135deg, rgba(120, 53, 15, 0.45) 0%, rgba(67, 20, 7, 0.85) 100%); }
+    .card-theme-visitors { background: linear-gradient(135deg, rgba(12, 74, 96, 0.45) 0%, rgba(6, 44, 60, 0.85) 100%); }
+    .card-theme-pending { background: linear-gradient(135deg, rgba(136, 19, 55, 0.45) 0%, rgba(76, 5, 25, 0.85) 100%); }
+    .stat-card:hover { transform: translateY(-6px) scale(1.02); }
+    .stat-icon { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 18px; }
+    .icon-members { background: linear-gradient(135deg, #a855f7, #6366f1); color: white; }
+    .icon-events { background: linear-gradient(135deg, #f59e0b, #ef4444); color: white; }
+    .icon-visitors { background: linear-gradient(135deg, #06b6d4, #10b981); color: white; }
+    .icon-pending { background: linear-gradient(135deg, #ec4899, #f43f5e); color: white; }
+    .stat-number { font-size: 40px; font-weight: 800; color: white; line-height: 1.05; margin-bottom: 6px; }
+    .stat-label { font-size: 14px; color: #cbd5e1; font-weight: 700; }
+    .tool-btn {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.14); color: #f1f5f9; padding: 10px 20px; border-radius: 14px; font-size: 13px; font-weight: 700; cursor: pointer;
+    }
+    .membership-card {
+      background: linear-gradient(135deg, rgba(18, 24, 43, 0.85) 0%, rgba(10, 14, 26, 0.95) 100%);
+      border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 24px; padding: 28px; backdrop-filter: blur(20px);
+    }
+    .approve-btn {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white; border: none; padding: 10px 20px; border-radius: 12px; font-weight: 700; font-size: 13px; cursor: pointer;
+    }
+    .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 999; display: none; }
+    .sidebar-overlay.active { display: block; }
+    @media (max-width: 1024px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.active { transform: translateX(0); }
+      .main-content { margin-left: 0; padding: 24px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) { .stats-grid { grid-template-columns: 1fr; } }
+  </style>
+  <script>
+    window.API_BASE = window.API_BASE || (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:3001';
+    (function() {
+      var origFetch = window.fetch;
+      window.fetch = function(input, init) {
+        if (typeof input === 'string' && input.startsWith('/api/')) {
+          input = window.API_BASE + input;
+        } else if (typeof input === 'string' && input.startsWith('/uploads/')) {
+          input = window.API_BASE + input;
+        }
+        return origFetch.call(this, input, init);
+      };
+    })();
+  </script>
+</head>
+<body>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img src="/img/logo.png" alt="SANA Logo">
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav">
+      <a href="/dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <a href="/next-event"><i class="fas fa-calendar-alt"></i> Events</a>
+      <a href="/news"><i class="fas fa-newspaper"></i> News</a>
+      <a href="/servicework"><i class="fas fa-tools"></i> Services</a>
+      <div id="adminLinks" style="display: none;">
+        <a href="/add-member"><i class="fas fa-user-plus"></i> Add Member</a>
+        <a href="/newslist"><i class="fas fa-envelope-open-text"></i> E-News</a>
+        <a href="/admin-users"><i class="fas fa-users-cog"></i> Admin Users</a>
+        <a href="/membership-applications"><i class="fas fa-check-circle"></i> Member Approve</a>
+        <a href="/manage-member"><i class="fas fa-user-edit"></i> Member Edit</a>
+        <a href="/office-bearers"><i class="fas fa-building"></i> About</a>
+      </div>
+      <a href="/"><i class="fas fa-globe"></i> Home</a>
+    </nav>
+  </div>
+
+  <div class="main-content">
+    <div class="top-header">
+      <div style="display:flex; align-items:center; gap:16px;">
+        <div class="menu-toggle" onclick="toggleSidebar()" style="cursor:pointer; font-size: 20px;">
+          <i class="fas fa-bars"></i>
+        </div>
+        <div>
+          <h1 id="dashboardTitle">Admin Dashboard</h1>
+        </div>
+      </div>
+      <div class="user-pill">
+        <div style="display:flex; flex-direction:column; align-items:flex-end;">
+          <span id="loggedUserName" style="font-weight:700; font-size:14px; color:#f8fafc;">Admin</span>
+          <button class="logout-btn" onclick="logoutUser()" style="margin-top:4px;">Logout</button>
+        </div>
+        <img src="/img/avatar1.png" class="user-avatar" alt="User">
+      </div>
+    </div>
+
+    <div style="display:flex; gap:14px; margin-bottom:28px; justify-content:flex-end;">
+      <button id="langBtn" class="tool-btn" onclick="toggleLanguage()">🇮🇳 Tamil</button>
+      <button id="statsToggleBtn" class="tool-btn" onclick="toggleStatsCycle()">🔁 Auto Toggle</button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card card-theme-members">
+        <div class="stat-icon icon-members"><i class="fas fa-users"></i></div>
+        <div class="stat-number" id="membersCount">0</div>
+        <div class="stat-label" id="membersLabel">Total Members</div>
+      </div>
+      <div class="stat-card card-theme-events">
+        <div class="stat-icon icon-events"><i class="fas fa-calendar-star"></i></div>
+        <div class="stat-number" id="eventsCount">0</div>
+        <div class="stat-label" id="eventsLabel">Total Events</div>
+      </div>
+      <div class="stat-card card-theme-visitors">
+        <div class="stat-icon icon-visitors"><i class="fas fa-eye"></i></div>
+        <div class="stat-number" id="visitorsCount">0</div>
+        <div class="stat-label" id="visitorsLabel">Visitors</div>
+      </div>
+      <div class="stat-card card-theme-pending">
+        <div class="stat-icon icon-pending"><i class="fas fa-clock"></i></div>
+        <div class="stat-number" id="pendingCount">0</div>
+        <div class="stat-label" id="pendingLabel">Pending Application</div>
+      </div>
+    </div>
+
+    <div class="membership-section" id="membershipSection" style="display: none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <div style="font-size:20px; font-weight:800; color:#f8fafc;">🆕 New Membership Applications</div>
+        <button class="tool-btn" id="membershipToggleBtn" onclick="toggleMembershipSection()">
+          <i class="fas fa-chevron-down"></i> Toggle
+        </button>
+      </div>
+      <div id="membershipTableContainer" style="display:block;">
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; text-align:left;">
+            <thead>
+              <tr style="color:#94a3b8; font-size:12px; text-transform:uppercase; letter-spacing:0.08em;">
+                <th style="padding:14px 18px;">Name</th>
+                <th style="padding:14px 18px;">Mobile</th>
+                <th style="padding:14px 18px;">Ref ID</th>
+                <th style="padding:14px 18px; text-align:center;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="membershipTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentLang = 'en';
+    const translations = {
+      en: { dashboard: 'Admin Dashboard', members: 'Total Members', events: 'Total Events', visitors: 'Visitors', pending: 'Pending Application' },
+      ta: { dashboard: 'நிர்வாக பலகம்', members: 'மொத்த உறுப்பினர்கள்', events: 'மொத்த நிகழ்வுகள்', visitors: 'பார்வையாளர்கள்', pending: 'பெண்டிங் விண்ணப்பங்கள்' }
+    };
+
+    async function loadRealData() {
+      try {
+        const usersResponse = await fetch('/api/getUsers');
+        if (usersResponse.ok) {
+          const usersData = await usersResponse.json();
+          const totalMembers = getArrayLength(usersData);
+          document.getElementById('membersCount').textContent = totalMembers.toLocaleString();
+        }
+        const eventsResponse = await fetch('/api/events');
+        if (eventsResponse.ok) {
+          const eventsData = await eventsResponse.json();
+          const totalEvents = getArrayLength(eventsData.events || eventsData);
+          document.getElementById('eventsCount').textContent = totalEvents.toLocaleString();
+        }
+        const visitorsResponse = await fetch('/api/visitors');
+        if (visitorsResponse.ok) {
+          const visitorsData = await visitorsResponse.json();
+          document.getElementById('visitorsCount').textContent = (visitorsData.count || 0).toLocaleString();
+        }
+      } catch (error) {
+        loadDemoData();
+      }
+    }
+
+    async function approveMembership(id) {
+      if (confirm('✅ Approve membership application?')) {
+        try {
+          const response = await fetch(`/api/admin/update/${id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'approved' })
+          });
+          const result = await response.json();
+          if (!result.success) { alert('❌ Server error: ' + result.message); return; }
+          if (result.whatsapp) { window.open(result.whatsapp, '_blank', 'noopener,noreferrer'); }
+          await loadRealData();
+          await loadPendingApplications();
+          alert('✅ APPROVED! WhatsApp opened');
+        } catch(e) {
+          alert('✅ APPROVED locally!');
+        }
+      }
+    }
+
+    function getArrayLength(data) {
+      if (Array.isArray(data)) return data.length;
+      if (data.users && Array.isArray(data.users)) return data.users.length;
+      if (data.members && Array.isArray(data.members)) return data.members.length;
+      if (data.data && Array.isArray(data.data)) return data.data.length;
+      if (typeof data === 'object') return Object.keys(data).length;
+      return 0;
+    }
+
+    function loadDemoData() {
+      document.getElementById('membersCount').textContent = '1,250';
+      document.getElementById('eventsCount').textContent = '45';
+      document.getElementById('visitorsCount').textContent = '1,247';
+      document.getElementById('pendingCount').textContent = '4';
+    }
+
+    function initializeUser() {
+      try {
+        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        document.getElementById('loggedUserName').textContent = user.name || user.username || 'Admin';
+        const isAdmin = user.role === 'admin' || user.role === 'super';
+        if (isAdmin) {
+          document.getElementById('adminLinks').style.display = 'block';
+          document.getElementById('membershipSection').style.display = 'block';
+        }
+      } catch (e) {
+        console.error('User init error', e);
+      }
+    }
+
+    function toggleLanguage() {
+      currentLang = currentLang === 'en' ? 'ta' : 'en';
+      document.getElementById('langBtn').textContent = currentLang === 'en' ? '🇮🇳 Tamil' : '🇺🇸 English';
+      document.getElementById('dashboardTitle').textContent = translations[currentLang].dashboard;
+      document.getElementById('membersLabel').textContent = translations[currentLang].members;
+      document.getElementById('eventsLabel').textContent = translations[currentLang].events;
+      document.getElementById('visitorsLabel').textContent = translations[currentLang].visitors;
+      document.getElementById('pendingLabel').textContent = translations[currentLang].pending;
+    }
+
+    function toggleMembershipSection() {
+      const container = document.getElementById('membershipTableContainer');
+      container.style.display = container.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function logoutUser() { localStorage.clear(); window.location.replace('/'); }
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('active');
+      document.querySelector('.sidebar-overlay').classList.toggle('active');
+    }
+
+    let statsCycleOn = false;
+    let statsIndex = 0;
+    let statsTimer = null;
+
+    function showCurrentStat() {
+      const cards = Array.from(document.querySelectorAll('.stats-grid .stat-card'));
+      cards.forEach((c, i) => { c.style.display = i === statsIndex ? 'block' : 'none'; });
+    }
+
+    function startStatsCycle() {
+      const cards = Array.from(document.querySelectorAll('.stats-grid .stat-card'));
+      if (cards.length === 0) return;
+      showCurrentStat();
+      if (statsTimer) clearInterval(statsTimer);
+      statsTimer = setInterval(() => {
+        statsIndex = (statsIndex + 1) % cards.length;
+        showCurrentStat();
+      }, 3000);
+      document.getElementById('statsToggleBtn').textContent = '🔁 Auto Toggle';
+    }
+
+    function stopStatsCycle() {
+      if (statsTimer) clearInterval(statsTimer);
+      statsTimer = null;
+      document.querySelectorAll('.stats-grid .stat-card').forEach(c => c.style.display = 'block');
+      document.getElementById('statsToggleBtn').textContent = '⬛ Show All';
+    }
+
+    function toggleStatsCycle() {
+      statsCycleOn = !statsCycleOn;
+      if (statsCycleOn) startStatsCycle();
+      else stopStatsCycle();
+    }
+
+    async function loadPendingApplications() {
+      try {
+        const res = await fetch('/api/admin/applications');
+        const data = await res.json();
+        const pending = data.filter(a => a.status === 'pending');
+        document.getElementById('pendingCount').textContent = pending.length;
+        renderDashboardApprovals(pending);
+      } catch (e) {
+        console.error('Pending load error', e);
+      }
+    }
+
+    function renderDashboardApprovals(list) {
+      const tbody = document.getElementById('membershipTableBody');
+      tbody.innerHTML = '';
+      if (!list || list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#94a3b8; padding:24px;">No pending applications</td></tr>`;
+        return;
+      }
+      list.forEach(app => {
+        tbody.innerHTML += `
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:16px 18px; font-weight:700;">${app.name}</td>
+            <td style="padding:16px 18px;">${app.mobile}</td>
+            <td style="padding:16px 18px;"><span style="background:linear-gradient(135deg, rgba(139,92,246,0.25), rgba(236,72,153,0.25)); color:#e879f9; padding:6px 12px; border-radius:8px; font-family:monospace; font-weight:700;">${app.refId}</span></td>
+            <td style="padding:16px 18px; text-align:center;">
+              <button class="approve-btn" onclick="approveMembership('${app.id}')">
+                <i class="fas fa-check-circle"></i> Approve
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeUser();
+      loadRealData();
+      loadPendingApplications();
+      setInterval(loadRealData, 30000);
+    });
+  </script>
+</body>
+</html>

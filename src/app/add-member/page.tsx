@@ -140,7 +140,7 @@ export default function AddMemberPage() {
 
                 <div>
                   <h2>Basic Information</h2>
-                  <p>Enter the member's basic profile details.</p>
+                  <p>Enter the member&apos;s basic profile details.</p>
                 </div>
               </div>
             </div>

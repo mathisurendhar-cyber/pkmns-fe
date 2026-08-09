@@ -84,55 +84,60 @@ export default function ServicePage() {
           [];
 
       setCategories(
-        categoryList.map((item: any) => ({
-          id: item.id,
+        categoryList.map((item: Record<string, unknown>) => ({
+          id: String(item.id ?? ''),
           name:
-            item.name ||
-            item.category ||
-            'Service',
-          count:
+            String(item.name || item.category || 'Service'),
+          count: Number(
             item.count ||
-            item.providers_count ||
-            0,
+              item.providers_count ||
+              0,
+          ),
         })),
       );
 
       setProviders(
-        providerList.map((item: any) => ({
-          id: item.id,
+        providerList.map((item: Record<string, unknown>) => ({
+          id: String(item.id ?? ''),
 
-          name:
+          name: String(
             item.name ||
-            item.full_name ||
-            item.member_name ||
-            'Service Professional',
+              item.full_name ||
+              item.member_name ||
+              'Service Professional',
+          ),
 
-          phone:
+          phone: String(
             item.phone ||
-            item.mobile ||
-            item.mobile_number ||
-            '',
+              item.mobile ||
+              item.mobile_number ||
+              '',
+          ),
 
-          mobile:
+          mobile: String(
             item.mobile ||
-            item.mobile_number ||
-            item.phone ||
-            '',
+              item.mobile_number ||
+              item.phone ||
+              '',
+          ),
 
-          category:
+          category: String(
             item.category ||
-            item.category_name ||
-            '',
+              item.category_name ||
+              '',
+          ),
 
-          category_id:
+          category_id: String(
             item.category_id ||
-            item.categoryId ||
-            '',
+              item.categoryId ||
+              '',
+          ),
 
-          categoryId:
+          categoryId: String(
             item.categoryId ||
-            item.category_id ||
-            '',
+              item.category_id ||
+              '',
+          ),
         })),
       );
     } catch (error) {

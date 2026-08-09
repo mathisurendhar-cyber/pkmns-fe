@@ -2,7 +2,6 @@
 
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 type Tab = 'services' | 'providers';
 
@@ -79,8 +78,6 @@ const initialProviders: Provider[] = [
 ];
 
 export default function Page() {
-  const router = useRouter();
-
   const [categories, setCategories] =
     useState<Category[]>(initialCategories);
 

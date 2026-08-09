@@ -14,10 +14,32 @@ type NewsItem = {
   created_at?: string;
 };
 
+type NoticeType = 'success' | 'error' | 'warning';
+
+type Notice = {
+  show: boolean;
+  type: NoticeType;
+  title: string;
+  message: string;
+};
+
 export default function NewsListPage() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const [notice, setNotice] = useState<Notice>({
+    show: false,
+    type: 'success',
+    title: '',
+    message: '',
+  });
+
+  // =========================================================
+  // AUTH + LOAD NEWS
+  // =========================================================
 
   useEffect(() => {
     requireAuth();
@@ -39,376 +61,423 @@ export default function NewsListPage() {
 
       const data = await res.json();
 
-      setNews(data.news || []);
+      setNews(Array.isArray(data.news) ? data.news : []);
     } catch (error) {
-      console.error('News loading error:', error);
-      setNews([]);
+      console.error(error);
+
+      showNotice(
+        'error',
+        'Unable to Load',
+        'Unable to load news at this time.',
+      );
     } finally {
       setLoading(false);
     }
   }
 
-  async function deleteNews(id: number) {
-    const confirmed = window.confirm(
-      'Are you sure you want to delete this news?'
-    );
+  // =========================================================
+  // CUSTOM NOTICE
+  // =========================================================
 
-    if (!confirmed) return;
+  function showNotice(
+    type: NoticeType,
+    title: string,
+    message: string,
+  ) {
+    setNotice({
+      show: true,
+      type,
+      title,
+      message,
+    });
+  }
+
+  function closeNotice() {
+    setNotice((prev) => ({
+      ...prev,
+      show: false,
+    }));
+  }
+
+  // =========================================================
+  // OPEN DELETE CONFIRMATION
+  // =========================================================
+
+  function openDeleteConfirmation(id: number) {
+    setDeleteId(id);
+  }
+
+  function closeDeleteConfirmation() {
+    if (deleting) return;
+
+    setDeleteId(null);
+  }
+
+  // =========================================================
+  // DELETE NEWS
+  // =========================================================
+
+  async function confirmDelete() {
+    if (!deleteId || deleting) {
+      return;
+    }
 
     try {
-      setDeletingId(id);
+      setDeleting(true);
 
-      const res = await fetch(`/api/news/${id}`, {
+      const res = await fetch(`/api/news/${deleteId}`, {
         method: 'DELETE',
       });
 
       const data = await res.json();
 
-      if (data.success) {
-        setNews((prev) => prev.filter((item) => item.id !== id));
-      } else {
-        alert('Delete failed');
+      if (!res.ok || !data.success) {
+        throw new Error(
+          data.message || 'Failed to delete news',
+        );
       }
+
+      // Remove immediately from UI
+      setNews((current) =>
+        current.filter((item) => item.id !== deleteId),
+      );
+
+      // Close delete modal
+      setDeleteId(null);
+
+      // Success notification
+      showNotice(
+        'success',
+        'News Deleted',
+        'The news article has been deleted successfully.',
+      );
     } catch (error) {
-      console.error('Delete error:', error);
-      alert('Something went wrong while deleting the news.');
+      console.error('Delete news error:', error);
+
+      setDeleteId(null);
+
+      showNotice(
+        'error',
+        'Delete Failed',
+        'Unable to delete this news article. Please try again.',
+      );
     } finally {
-      setDeletingId(null);
+      setDeleting(false);
     }
   }
+
+  // =========================================================
+  // DATE FORMAT
+  // =========================================================
+
+  function formatDate(date?: string) {
+    if (!date) return '';
+
+    try {
+      return new Date(date).toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return '';
+    }
+  }
+
+  // =========================================================
+  // UI
+  // =========================================================
 
   return (
     <AdminLayout>
       <div className="newslist-page">
-        <div className="news-bg-glow news-glow-one" />
-        <div className="news-bg-glow news-glow-two" />
 
-        <div className="newslist-wrap">
+        {/* =====================================================
+            HEADER
+            ===================================================== */}
 
-          {/* HEADER */}
-          <header className="news-header">
+        <div className="newslist-header">
 
-            <div className="news-brand">
+          <div className="newslist-heading">
 
-              <div className="news-logo">
-                <span>✦</span>
-              </div>
+            <span className="newslist-label">
+              CONTENT MANAGEMENT
+            </span>
 
-              <div>
-                <div className="news-eyebrow">
-                  CONTENT MANAGEMENT
-                </div>
+            <h1>News &amp; Updates</h1>
 
-                <h1>News & Updates</h1>
+            <p>
+              Manage announcements, stories and important
+              community updates.
+            </p>
 
-                <p>
-                  Manage announcements, stories and important updates.
-                </p>
-              </div>
+          </div>
 
-            </div>
+          <div className="newslist-header-actions">
 
-            <div className="news-header-actions">
-
-              <button
-                type="button"
-                className="refresh-btn"
-                onClick={loadNews}
-                disabled={loading}
-              >
-                <span className={loading ? 'refresh-icon spinning' : 'refresh-icon'}>
-                  ↻
-                </span>
-
-                {loading ? 'Loading...' : 'Refresh'}
-              </button>
-
-              <Link
-                href="/news"
-                className="add-news-btn"
-              >
-                <span>＋</span>
-                Add News
-              </Link>
-
-            </div>
-
-          </header>
-
-
-          {/* TOP SUMMARY */}
-          <section className="news-summary">
-
-            <div className="summary-card">
-
-              <div className="summary-icon">
-                ◈
-              </div>
-
-              <div>
-                <span className="summary-label">
-                  TOTAL NEWS
-                </span>
-
-                <strong>
-                  {news.length}
-                </strong>
-
-                <small>
-                  Published records
-                </small>
-              </div>
-
-            </div>
-
-
-            <div className="summary-card">
-
-              <div className="summary-icon">
-                ✓
-              </div>
-
-              <div>
-                <span className="summary-label">
-                  STATUS
-                </span>
-
-                <strong className="status-active">
-                  Active
-                </strong>
-
-                <small>
-                  Content system online
-                </small>
-              </div>
-
-            </div>
-
-
-            <div className="summary-card">
-
-              <div className="summary-icon">
-                ▣
-              </div>
-
-              <div>
-                <span className="summary-label">
-                  MANAGEMENT
-                </span>
-
-                <strong>
-                  News
-                </strong>
-
-                <small>
-                  Create, view and delete
-                </small>
-              </div>
-
-            </div>
-
-          </section>
-
-
-          {/* SECTION TITLE */}
-          <div className="section-heading">
-
-            <div>
-              <span className="section-overline">
-                LATEST CONTENT
+            <button
+              type="button"
+              className="news-refresh-btn"
+              onClick={loadNews}
+              disabled={loading}
+            >
+              <span className={loading ? 'spin' : ''}>
+                ↻
               </span>
 
-              <h2>
-                News Collection
-              </h2>
+              {loading ? 'Loading...' : 'Refresh'}
+            </button>
 
-              <p>
-                All published news items are displayed below.
-              </p>
+            <Link
+              href="/news"
+              className="news-add-btn"
+            >
+              <span>＋</span>
+              Add News
+            </Link>
+
+          </div>
+
+        </div>
+
+        {/* =====================================================
+            SUMMARY
+            ===================================================== */}
+
+        <div className="news-summary">
+
+          <div className="news-summary-card">
+
+            <div className="summary-icon orange">
+              ◈
             </div>
 
-            <div className="news-count">
-              {news.length} {news.length === 1 ? 'Article' : 'Articles'}
+            <div>
+              <span>Total News</span>
+              <strong>{news.length}</strong>
+              <small>Published records</small>
             </div>
 
           </div>
 
+          <div className="news-summary-card">
 
-          {/* LOADING */}
-          {loading && (
-            <div className="news-loading">
-
-              <div className="loading-spinner" />
-
-              <h3>Loading news...</h3>
-
-              <p>
-                Please wait while we fetch the latest updates.
-              </p>
-
+            <div className="summary-icon green">
+              ✓
             </div>
-          )}
 
+            <div>
+              <span>Status</span>
+              <strong>Active</strong>
+              <small>Content system online</small>
+            </div>
 
-          {/* EMPTY */}
-          {!loading && news.length === 0 && (
-            <div className="empty-news">
+          </div>
 
-              <div className="empty-icon">
-                ✦
-              </div>
+          <div className="news-summary-card">
 
-              <h3>
-                No news available
-              </h3>
+            <div className="summary-icon blue">
+              ▣
+            </div>
 
-              <p>
-                You haven't published any news yet.
-              </p>
+            <div>
+              <span>Section</span>
+              <strong>News</strong>
+              <small>Community updates</small>
+            </div>
 
-              <Link
-                href="/news"
-                className="empty-add-btn"
+          </div>
+
+        </div>
+
+        {/* =====================================================
+            SECTION HEADER
+            ===================================================== */}
+
+        <div className="news-section-header">
+
+          <div>
+
+            <span className="section-label">
+              NEWS DIRECTORY
+            </span>
+
+            <h2>Published News</h2>
+
+            <p>
+              View and manage all published news articles.
+            </p>
+
+          </div>
+
+          <div className="article-count">
+            {news.length}{' '}
+            {news.length === 1 ? 'Article' : 'Articles'}
+          </div>
+
+        </div>
+
+        {/* =====================================================
+            LOADING
+            ===================================================== */}
+
+        {loading && (
+          <div className="news-loading">
+
+            <div className="loading-circle" />
+
+            <h3>Loading News</h3>
+
+            <p>
+              Fetching the latest community updates...
+            </p>
+
+          </div>
+        )}
+
+        {/* =====================================================
+            EMPTY
+            ===================================================== */}
+
+        {!loading && news.length === 0 && (
+          <div className="news-empty">
+
+            <div className="empty-icon">
+              +
+            </div>
+
+            <h3>No News Available</h3>
+
+            <p>
+              There are no published news articles yet.
+            </p>
+
+            <Link
+              href="/news"
+              className="empty-add-btn"
+            >
+              ＋ Add First News
+            </Link>
+
+          </div>
+        )}
+
+        {/* =====================================================
+            NEWS GRID
+            ===================================================== */}
+
+        {!loading && news.length > 0 && (
+          <div className="news-grid">
+
+            {news.map((item, index) => (
+
+              <article
+                className="news-card"
+                key={item.id}
               >
-                ＋ Create Your First News
-              </Link>
 
-            </div>
-          )}
+                {/* IMAGE */}
 
+                <div className="news-image">
 
-          {/* NEWS LIST */}
-          {!loading && news.length > 0 && (
-            <div className="news-grid">
+                  {item.image_url ? (
+                    <img
+                      src={item.image_url}
+                      alt={item.title}
+                    />
+                  ) : (
+                    <div className="news-image-empty">
+                      <span>✦</span>
+                      <small>NEWS</small>
+                    </div>
+                  )}
 
-              {news.map((item, index) => (
+                  <div className="news-index">
+                    #{String(index + 1).padStart(2, '0')}
+                  </div>
 
-                <article
-                  className="news-card"
-                  key={item.id}
-                >
+                  <div className="published-tag">
+                    <span />
+                    Published
+                  </div>
 
-                  {/* IMAGE */}
-                  <div className="news-media">
+                </div>
 
-                    {item.image_url ? (
-                      <img
-                        src={item.image_url}
-                        alt={item.title}
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="news-image-placeholder">
+                {/* CONTENT */}
 
-                        <div className="placeholder-symbol">
-                          ✦
-                        </div>
+                <div className="news-card-content">
 
-                        <span>
-                          NEWS
-                        </span>
+                  <div className="news-meta">
 
-                      </div>
+                    <span>
+                      NEWS UPDATE
+                    </span>
+
+                    {item.created_at && (
+                      <time>
+                        {formatDate(item.created_at)}
+                      </time>
                     )}
 
-                    <div className="news-number">
-                      #{String(index + 1).padStart(2, '0')}
-                    </div>
+                  </div>
 
-                    <div className="published-badge">
-                      <span />
-                      Published
-                    </div>
+                  <h3>
+                    {item.title}
+                  </h3>
+
+                  <p className="news-description">
+                    {item.content}
+                  </p>
+
+                  {/* BUTTONS */}
+
+                  <div className="news-card-actions">
+
+                    <Link
+                      href={`/newsview?id=${item.id}`}
+                      target="_blank"
+                      className="view-news-btn"
+                    >
+                      <span>View News</span>
+                      <b>→</b>
+                    </Link>
+
+                    <button
+                      type="button"
+                      className="delete-news-btn"
+                      onClick={() =>
+                        openDeleteConfirmation(item.id)
+                      }
+                    >
+                      <span>Delete</span>
+                      <b>×</b>
+                    </button>
 
                   </div>
 
+                </div>
 
-                  {/* CONTENT */}
-                  <div className="news-content">
+              </article>
 
-                    <div className="news-meta">
+            ))}
 
-                      <span>
-                        NEWS UPDATE
-                      </span>
+          </div>
+        )}
 
-                      {item.created_at && (
-                        <time>
-                          {new Date(
-                            item.created_at
-                          ).toLocaleDateString('en-IN', {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric',
-                          })}
-                        </time>
-                      )}
+        {/* =====================================================
+            BOTTOM CTA
+            ===================================================== */}
 
-                    </div>
+        {!loading && news.length > 0 && (
+          <div className="news-bottom-cta">
 
+            <div className="cta-left">
 
-                    <h3>
-                      {item.title}
-                    </h3>
-
-
-                    <p className="news-description">
-                      {item.content}
-                    </p>
-
-
-                    <div className="news-card-footer">
-
-                      <Link
-                        href={`/newsview?id=${item.id}`}
-                        target="_blank"
-                        className="view-news-btn"
-                      >
-                        View News
-                        <span>→</span>
-                      </Link>
-
-
-                      <button
-                        type="button"
-                        className="delete-news-btn"
-                        onClick={() => deleteNews(item.id)}
-                        disabled={deletingId === item.id}
-                      >
-                        {deletingId === item.id ? (
-                          <>
-                            <span className="button-spinner" />
-                            Deleting...
-                          </>
-                        ) : (
-                          <>
-                            Delete
-                            <span>×</span>
-                          </>
-                        )}
-                      </button>
-
-                    </div>
-
-                  </div>
-
-                </article>
-
-              ))}
-
-            </div>
-          )}
-
-
-          {/* BOTTOM CTA */}
-          {!loading && news.length > 0 && (
-            <section className="news-cta">
-
-              <div className="cta-symbol">
+              <div className="cta-icon">
                 +
               </div>
 
-              <div className="cta-content">
+              <div>
 
                 <span>
                   KEEP YOUR COMMUNITY UPDATED
@@ -419,34 +488,144 @@ export default function NewsListPage() {
                 </h3>
 
                 <p>
-                  Create a new announcement and keep your members informed.
+                  Create a new announcement and keep your
+                  members informed.
                 </p>
 
               </div>
 
-              <Link
-                href="/news"
-                className="cta-button"
-              >
-                Create News
-                <span>→</span>
-              </Link>
+            </div>
 
-            </section>
-          )}
+            <Link
+              href="/news"
+              className="cta-add-btn"
+            >
+              Create News
+              <b>→</b>
+            </Link>
 
-        </div>
+          </div>
+        )}
 
+        {/* =====================================================
+            DELETE CONFIRMATION MODAL
+            ===================================================== */}
 
-        {/* FLOATING HOME */}
-        <div className="home-float">
-          <Link
-            href="/"
-            aria-label="Go to Home"
+        {deleteId !== null && (
+          <div
+            className="custom-modal-overlay"
+            role="presentation"
           >
-            <span>⌂</span>
-          </Link>
-        </div>
+
+            <div
+              className="custom-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="delete-title"
+            >
+
+              <div className="modal-icon warning">
+                !
+              </div>
+
+              <div className="modal-content">
+
+                <h3 id="delete-title">
+                  Delete News?
+                </h3>
+
+                <p>
+                  Are you sure you want to delete this news?
+                  This action cannot be undone.
+                </p>
+
+              </div>
+
+              <div className="modal-actions">
+
+                <button
+                  type="button"
+                  className="modal-cancel-btn"
+                  onClick={closeDeleteConfirmation}
+                  disabled={deleting}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  className="modal-delete-btn"
+                  onClick={confirmDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? (
+                    <>
+                      <span className="button-loader" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      Delete
+                      <span>×</span>
+                    </>
+                  )}
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* =====================================================
+            SUCCESS / ERROR NOTIFICATION
+            ===================================================== */}
+
+        {notice.show && (
+          <div
+            className="custom-modal-overlay"
+            role="presentation"
+            onClick={closeNotice}
+          >
+
+            <div
+              className="custom-notification"
+              role="dialog"
+              aria-modal="true"
+              onClick={(e) =>
+                e.stopPropagation()
+              }
+            >
+
+              <div
+                className={`notification-icon ${notice.type}`}
+              >
+                {notice.type === 'success' && '✓'}
+                {notice.type === 'error' && '×'}
+                {notice.type === 'warning' && '!'}
+              </div>
+
+              <h3>
+                {notice.title}
+              </h3>
+
+              <p>
+                {notice.message}
+              </p>
+
+              <button
+                type="button"
+                className={`notification-ok ${notice.type}`}
+                onClick={closeNotice}
+              >
+                OK
+              </button>
+
+            </div>
+
+          </div>
+        )}
 
       </div>
     </AdminLayout>

@@ -1,9 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { setCurrentUser } from '@/lib/auth';
 import './login.css';
+
+function maskEmail(email: string) {
+  const [local, domain] = email.split('@');
+  if (!local || !domain) return email;
+  const visible = local.slice(0, 1);
+  return `${visible}***@${domain}`;
+}
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -14,45 +21,86 @@ export default function LoginPage() {
   const [otpMsg, setOtpMsg] = useState('');
   const [otpMsgColor, setOtpMsgColor] = useState('green');
   const [step1Email, setStep1Email] = useState('');
+  const [sending, setSending] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [popupOpen, setPopupOpen] = useState(false);
+  const otpInputRef = useRef<HTMLInputElement>(null);
+  const verifyingRef = useRef(false);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    const res = await fetch('/api/login-step1', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: username.trim(),
-        password: password.trim(),
-        email: email.trim(),
-      }),
-    });
-    const data = await res.json();
-    if (!data.success) {
+    setSending(true);
+    setOtpMsg('');
+    try {
+      const res = await fetch('/api/login-step1', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: username.trim(),
+          password: password.trim(),
+          email: email.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setOtpMsgColor('red');
+        setOtpMsg(data.message || 'Login failed');
+        return;
+      }
+      setStep1Email(email.trim());
+      setShowOtp(true);
+      setOtp('');
+      setOtpMsgColor('green');
+      setOtpMsg(data.message || 'OTP sent to your email');
+      setPopupOpen(true);
+    } catch {
       setOtpMsgColor('red');
-      setOtpMsg(data.message || 'Login failed');
-      return;
+      setOtpMsg('Network error. Please try again.');
+    } finally {
+      setSending(false);
     }
-    alert('Your OTP is: ' + data.otp);
-    setStep1Email(email.trim());
-    setShowOtp(true);
-    setOtpMsgColor('green');
-    setOtpMsg('Enter OTP shown above');
   }
 
-  async function verifyOtp() {
-    const res = await fetch('/api/login-step2', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: step1Email, otp: otp.trim() }),
-    });
-    const data = await res.json();
-    if (!data.success) {
+  async function verifyOtp(code?: string) {
+    const value = (code ?? otp).trim();
+    if (value.length !== 6 || verifyingRef.current) return;
+
+    verifyingRef.current = true;
+    setVerifying(true);
+    setOtpMsg('');
+    try {
+      const res = await fetch('/api/login-step2', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: step1Email, otp: value }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setOtpMsgColor('red');
+        setOtpMsg(data.message || 'Invalid OTP');
+        return;
+      }
+      setCurrentUser(data.user);
+      window.location.href = '/dashboard';
+    } catch {
       setOtpMsgColor('red');
-      setOtpMsg(data.message || 'Invalid OTP');
-      return;
+      setOtpMsg('Network error. Please try again.');
+    } finally {
+      setVerifying(false);
+      verifyingRef.current = false;
     }
-    setCurrentUser(data.user);
-    window.location.href = '/dashboard';
+  }
+
+  useEffect(() => {
+    if (otp.trim().length === 6 && showOtp) {
+      void verifyOtp(otp);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [otp, showOtp]);
+
+  function closePopup() {
+    setPopupOpen(false);
+    setTimeout(() => otpInputRef.current?.focus(), 50);
   }
 
   return (
@@ -150,6 +198,7 @@ export default function LoginPage() {
                   placeholder="Your username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  disabled={sending}
                 />
                 <span className="input-icon">
                   <i className="fas fa-user" />
@@ -166,6 +215,7 @@ export default function LoginPage() {
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={sending}
                 />
                 <span className="input-icon">
                   <i className="fas fa-lock" />
@@ -182,15 +232,16 @@ export default function LoginPage() {
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={sending}
                 />
                 <span className="input-icon">
                   <i className="fas fa-envelope" />
                 </span>
               </div>
             </div>
-            <button type="submit" className="login-btn">
+            <button type="submit" className="login-btn" disabled={sending}>
               <i className="fas fa-paper-plane" />
-              Send OTP
+              {sending ? 'Sending OTP...' : 'Send OTP'}
             </button>
           </form>
 
@@ -201,20 +252,30 @@ export default function LoginPage() {
                 <div className="input-wrap">
                   <input
                     id="otp"
+                    ref={otpInputRef}
                     type="text"
+                    inputMode="numeric"
                     maxLength={6}
                     placeholder="6-digit code"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
+                    onChange={(e) =>
+                      setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
+                    }
+                    disabled={verifying}
                   />
                   <span className="input-icon">
                     <i className="fas fa-key" />
                   </span>
                 </div>
               </div>
-              <button type="button" className="login-btn" onClick={verifyOtp}>
+              <button
+                type="button"
+                className="login-btn"
+                onClick={() => verifyOtp()}
+                disabled={verifying || otp.trim().length !== 6}
+              >
                 <i className="fas fa-check-circle" />
-                Verify & Login
+                {verifying ? 'Verifying...' : 'Verify & Login'}
               </button>
               <p className="otp-msg" style={{ color: otpMsgColor }}>
                 {otpMsg}
@@ -234,6 +295,31 @@ export default function LoginPage() {
           </div>
         </section>
       </main>
+
+      {popupOpen && (
+        <div className="otp-popup-backdrop" onClick={closePopup}>
+          <div
+            className="otp-popup"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="otp-popup-title"
+          >
+            <div className="otp-popup-icon">
+              <i className="fas fa-envelope-open-text" />
+            </div>
+            <h3 id="otp-popup-title">OTP Sent</h3>
+            <p>
+              A 6-digit verification code was sent to{' '}
+              <strong>{maskEmail(step1Email)}</strong>. Check your inbox and
+              enter the code below. It expires in 5 minutes.
+            </p>
+            <button type="button" className="otp-popup-btn" onClick={closePopup}>
+              Enter OTP
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

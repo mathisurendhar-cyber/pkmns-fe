@@ -140,30 +140,21 @@ export default function ServicePage() {
           providerData?.providers ||
           [];
 
-      setCategories(
-<<<<<<< HEAD
-        categoryList.map((item: Record<string, unknown>) => ({
-          id: String(item.id ?? ''),
-          name:
-            String(item.name || item.category || 'Service'),
-          count: Number(
-=======
-        categoryList.map((item: any) => ({
-          id: item.id,
-
-          name:
-            item.name ||
-            item.category ||
-            'Service',
-
-          count:
->>>>>>> 3b711da (chnage)
-            item.count ||
-              item.providers_count ||
-              0,
-          ),
-        })),
-      );
+          setCategories(
+            categoryList.map((item: Record<string, unknown>) => ({
+              id: String(item.id ?? ''),
+              name: String(
+                item.name ||
+                  item.category ||
+                  'Service',
+              ),
+              count: Number(
+                item.count ||
+                  item.providers_count ||
+                  0,
+              ),
+            })),
+          );
 
       setProviders(
         providerList.map((item: Record<string, unknown>) => ({

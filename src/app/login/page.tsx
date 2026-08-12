@@ -41,6 +41,15 @@ export default function LoginPage() {
           email: email.trim(),
         }),
       });
+      if (!res.ok) {
+        setOtpMsgColor('red');
+        setOtpMsg(
+          res.status === 503
+            ? 'Server unavailable. Backend is not reachable — check API_URL on Vercel.'
+            : `Request failed (${res.status}). Please try again.`,
+        );
+        return;
+      }
       const data = await res.json();
       if (!data.success) {
         setOtpMsgColor('red');

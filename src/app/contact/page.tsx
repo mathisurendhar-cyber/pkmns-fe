@@ -1,11 +1,11 @@
 'use client';
 
-import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
+import SiteNavbar from '@/components/layout/SiteNavbar';
 import { FormEvent, useState } from 'react';
 import './contact.css';
 
 export default function ContactPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
   const [message, setMessage] = useState('');
@@ -37,7 +37,7 @@ export default function ContactPage() {
 
     setSending(true);
     try {
-      const res = await fetch('/api/contact-with-file', {
+      const res = await apiFetch('/api/contact-with-file', {
         method: 'POST',
         body: formData,
       });
@@ -60,51 +60,8 @@ export default function ContactPage() {
 
   return (
     <div className="contact-page">
+      <SiteNavbar />
       <div className="logo-bg" />
-      <header>
-        <div className="header-container">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img
-              src="/img/logo.png"
-              alt="APNGDR Logo"
-              style={{
-                height: 55,
-                borderRadius: '50%',
-                background: '#fff',
-                padding: 4,
-                boxShadow: '0 1px 7px #0008',
-              }}
-            />
-            <h1
-              style={{
-                margin: 0,
-                fontWeight: 700,
-                fontSize: 'large',
-                color: 'white',
-              }}
-            >
-              Sri AmbalNagar Makkal Nalvazhu Sangam
-            </h1>
-          </div>
-          <button
-            type="button"
-            className="menu-toggle"
-            onClick={() => setMenuOpen((v) => !v)}
-          >
-            ☰
-          </button>
-          <nav>
-            <ul className={`menu ${menuOpen ? 'show' : ''}`}>
-              <Link href="/">Home</Link>
-              <Link href="/about">About </Link>
-              <Link href="/members">Members</Link>
-              <Link href="/events">Events</Link>
-              <Link href="/contact">Contact </Link>
-              <Link href="/login">Login</Link>
-            </ul>
-          </nav>
-        </div>
-      </header>
 
       <main className="contact-main">
         <div className="contact-info">

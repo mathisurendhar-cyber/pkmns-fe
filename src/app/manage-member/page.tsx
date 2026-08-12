@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -34,7 +35,7 @@ export default function ManageMemberPage() {
     try {
       setError('');
 
-      const res = await fetch('/api/getUsers');
+      const res = await apiFetch('/api/getUsers');
 
       if (!res.ok) {
         throw new Error('Failed to load members');

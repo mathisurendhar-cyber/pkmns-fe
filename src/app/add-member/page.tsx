@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { FormEvent, useEffect, useState } from 'react';
 import { isAdminRole, requireAuth } from '@/lib/auth';
@@ -73,7 +74,7 @@ export default function AddMemberPage() {
     }
 
     try {
-      const res = await fetch('/api/addUserWithPhoto', {
+      const res = await apiFetch('/api/addUserWithPhoto', {
         method: 'POST',
         body: formData,
       });

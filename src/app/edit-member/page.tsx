@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 import {
   FormEvent,
@@ -41,7 +42,7 @@ function EditMemberInner() {
 
     if (!id) return;
 
-    fetch('/api/getUsers')
+    apiFetch('/api/getUsers')
       .then((r) => r.json())
       .then((users) => {
         const member = users.find(

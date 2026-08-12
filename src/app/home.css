@@ -12,7 +12,8 @@
   box-sizing: border-box;
 }
 
-* {
+.home-page,
+.home-page * {
   box-sizing: border-box;
 }
 
@@ -41,7 +42,7 @@
    HEADER
 ========================================= */
 
-header {
+.home-page > header {
   width: 100%;
   height: 80px;
 
@@ -59,7 +60,7 @@ header {
   box-sizing: border-box;
 }
 
-.header-container {
+.home-page .header-container {
   width: 100%;
   height: 100%;
 
@@ -68,16 +69,16 @@ header {
   justify-content: space-between;
 }
 
-.logo {
+.home-page .logo {
   font-size: 18px;
   font-weight: 700;
 }
 
-nav {
+.home-page nav {
   position: relative;
 }
 
-ul.menu {
+.home-page ul.menu {
   list-style: none;
 
   display: flex;
@@ -87,11 +88,11 @@ ul.menu {
   gap: 20px;
 }
 
-ul.menu li {
+.home-page ul.menu li {
   list-style: none;
 }
 
-ul.menu li a {
+.home-page ul.menu li a {
   text-decoration: none;
 
   color: white;
@@ -105,12 +106,12 @@ ul.menu li a {
     opacity 0.2s ease;
 }
 
-ul.menu li a.active,
-ul.menu li a:hover {
+.home-page ul.menu li a.active,
+.home-page ul.menu li a:hover {
   color: #007BFF;
 }
 
-.menu-toggle {
+.home-page .menu-toggle {
   display: none;
 }
 
@@ -119,7 +120,7 @@ ul.menu li a:hover {
    MAIN
 ========================================= */
 
-main {
+.home-page main {
   width: 100%;
   margin: 0;
   padding: 0;
@@ -555,11 +556,11 @@ main {
 
 @media (max-width: 1024px) {
 
-  header {
+  .home-page > header {
     padding: 10px 16px;
   }
 
-  ul.menu {
+  .home-page ul.menu {
     gap: 15px;
   }
 
@@ -584,7 +585,7 @@ main {
 
 @media (max-width: 768px) {
 
-  header {
+  .home-page > header {
     width: 100%;
 
     height: auto;
@@ -598,7 +599,7 @@ main {
     -webkit-backdrop-filter: blur(6px);
   }
 
-  .header-container {
+  .home-page .header-container {
     width: 100%;
 
     flex-direction: column;
@@ -608,7 +609,7 @@ main {
     padding-bottom: 6px;
   }
 
-  nav {
+  .home-page nav {
     width: 100%;
 
     overflow-x: auto;
@@ -620,11 +621,11 @@ main {
     scrollbar-width: none;
   }
 
-  nav::-webkit-scrollbar {
+  .home-page nav::-webkit-scrollbar {
     display: none;
   }
 
-  ul.menu {
+  .home-page ul.menu {
     flex-direction: row;
 
     display: inline-flex;
@@ -644,24 +645,24 @@ main {
     justify-content: center;
   }
 
-  ul.menu li {
+  .home-page ul.menu li {
     display: inline-block;
 
     flex-shrink: 0;
   }
 
-  ul.menu li a {
+  .home-page ul.menu li a {
     color: black;
 
     font-size: 14px;
   }
 
-  ul.menu li a.active,
-  ul.menu li a:hover {
+  .home-page ul.menu li a.active,
+  .home-page ul.menu li a:hover {
     color: #007BFF;
   }
 
-  main {
+  .home-page main {
     width: 100%;
 
     margin: 0;
@@ -771,18 +772,18 @@ main {
 
 @media (max-width: 480px) {
 
-  header {
+  .home-page > header {
     padding-left: 8px;
     padding-right: 8px;
   }
 
-  ul.menu {
+  .home-page ul.menu {
     gap: 14px;
 
     padding: 7px 10px;
   }
 
-  ul.menu li a {
+  .home-page ul.menu li a {
     font-size: 12px;
   }
 
@@ -823,11 +824,11 @@ main {
 
 @media (max-width: 360px) {
 
-  ul.menu {
+  .home-page ul.menu {
     gap: 11px;
   }
 
-  ul.menu li a {
+  .home-page ul.menu li a {
     font-size: 11px;
   }
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch } from '@/lib/api';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { requireAuth } from '@/lib/auth';
@@ -32,7 +33,7 @@ export default function ProfilePage() {
       window.location.href = '/login';
       return;
     }
-    fetch('/api/getUsers')
+    apiFetch('/api/getUsers')
       .then((r) => r.json())
       .then((users: Profile[]) => {
         const found =
@@ -68,7 +69,7 @@ export default function ProfilePage() {
     if (photo) formData.append('photo', photo);
 
     try {
-      const res = await fetch('/api/updateUserWithPhoto', {
+      const res = await apiFetch('/api/updateUserWithPhoto', {
         method: 'POST',
         body: formData,
       });

@@ -1,5 +1,7 @@
 'use client';
 
+import { apiFetch } from '@/lib/api';
+import SiteNavbar from '@/components/layout/SiteNavbar';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
@@ -24,7 +26,7 @@ function NewsViewInner() {
       setError('No news id provided');
       return;
     }
-    fetch(`/api/news/${id}`)
+    apiFetch(`/api/news/${id}`)
       .then((res) => res.json())
       .then((n) => {
         if (!n || !n.id) {
@@ -56,6 +58,7 @@ function NewsViewInner() {
 export default function NewsViewPage() {
   return (
     <div className="newsview-page">
+      <SiteNavbar />
       <Suspense fallback={<div className="wrap">Loading...</div>}>
         <NewsViewInner />
       </Suspense>

@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch } from '@/lib/api';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import './dashboard.css';
@@ -156,7 +157,7 @@ export default function DashboardPage() {
   const loadRealData = async () => {
     try {
       // Members count
-      const usersRes = await fetch('/api/getUsers');
+      const usersRes = await apiFetch('/api/getUsers');
       if (usersRes.ok) {
         const usersData = await usersRes.json();
         const count = Array.isArray(usersData) ? usersData.length : (usersData.users?.length || 0);
@@ -164,7 +165,7 @@ export default function DashboardPage() {
       }
 
       // Events count
-      const eventsRes = await fetch('/api/events');
+      const eventsRes = await apiFetch('/api/events');
       if (eventsRes.ok) {
         const eventsData = await eventsRes.json();
         const list = eventsData.events || eventsData;
@@ -173,7 +174,7 @@ export default function DashboardPage() {
       }
 
       // Visitors count
-      const visRes = await fetch('/api/visitors');
+      const visRes = await apiFetch('/api/visitors');
       if (visRes.ok) {
         const visData = await visRes.json();
         setVisitorsCount(visData.count || 0);
@@ -189,7 +190,7 @@ export default function DashboardPage() {
   // Fetch pending applications
   const loadPendingApplications = async () => {
     try {
-      const res = await fetch('/api/admin/applications');
+      const res = await apiFetch('/api/admin/applications');
       if (res.ok) {
         const data: Application[] = await res.json();
         const pendingList = data.filter(a => a.status === 'pending');
@@ -224,7 +225,7 @@ export default function DashboardPage() {
   const handleApprove = async (id: string) => {
     if (!confirm('✅ Approve membership application?')) return;
     try {
-      const response = await fetch(`/api/admin/update/${id}`, {
+      const response = await apiFetch(`/api/admin/update/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'approved' }),

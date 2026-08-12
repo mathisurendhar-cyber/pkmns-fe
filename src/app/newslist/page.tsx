@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -50,7 +51,7 @@ export default function NewsListPage() {
     try {
       setLoading(true);
 
-      const res = await fetch('/api/news', {
+      const res = await apiFetch('/api/news', {
         method: 'GET',
         cache: 'no-store',
       });
@@ -125,7 +126,7 @@ export default function NewsListPage() {
     try {
       setDeleting(true);
 
-      const res = await fetch(`/api/news/${deleteId}`, {
+      const res = await apiFetch(`/api/news/${deleteId}`, {
         method: 'DELETE',
       });
 

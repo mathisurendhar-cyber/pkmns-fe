@@ -1,6 +1,7 @@
 'use client';
 
-import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
+import SiteNavbar from '@/components/layout/SiteNavbar';
 import { useEffect, useState } from 'react';
 import './about.css';
 
@@ -45,11 +46,10 @@ const ACTIVITIES = [
 ];
 
 export default function AboutPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [bearers, setBearers] = useState<Bearer[]>([]);
 
   useEffect(() => {
-    fetch('/api/office-bearers')
+    apiFetch('/api/office-bearers')
       .then((res) => res.json())
       .then((data) => {
         setBearers(Array.isArray(data) ? data : []);
@@ -61,83 +61,7 @@ export default function AboutPage() {
 
   return (
     <div className="about-page">
-
-      {/* ================= HEADER ================= */}
-
-      <header className="about-header">
-        <div className="header-container">
-
-          <Link href="/" className="brand">
-
-            <div className="brand-logo">
-              <img
-                src="/img/logo.png"
-                alt="Sri AmbalNagar Logo"
-              />
-            </div>
-
-            <div className="brand-content">
-              <strong>Sri AmbalNagar</strong>
-              <span>Makkal Nalvazhu Sangam</span>
-            </div>
-
-          </Link>
-
-          <button
-            type="button"
-            className="menu-toggle"
-            onClick={() => setMenuOpen((value) => !value)}
-          >
-            {menuOpen ? '×' : '☰'}
-          </button>
-
-          <nav className={menuOpen ? 'nav open' : 'nav'}>
-
-            <Link href="/" onClick={() => setMenuOpen(false)}>
-              Home
-            </Link>
-
-            <Link
-              href="/about"
-              className="active"
-              onClick={() => setMenuOpen(false)}
-            >
-              About Us
-            </Link>
-
-            <Link
-              href="/members"
-              onClick={() => setMenuOpen(false)}
-            >
-              Members
-            </Link>
-
-            <Link
-              href="/events"
-              onClick={() => setMenuOpen(false)}
-            >
-              Events
-            </Link>
-
-            <Link
-              href="/contact"
-              onClick={() => setMenuOpen(false)}
-            >
-              Contact Us
-            </Link>
-
-            <Link
-              href="/login"
-              onClick={() => setMenuOpen(false)}
-            >
-              Login
-            </Link>
-
-          </nav>
-
-        </div>
-      </header>
-
+      <SiteNavbar />
 
       {/* ================= PAGE INTRO ================= */}
 

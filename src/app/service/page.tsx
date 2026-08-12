@@ -1,6 +1,7 @@
 'use client';
 
-import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
+import SiteNavbar from '@/components/layout/SiteNavbar';
 import { useEffect, useMemo, useState } from 'react';
 import './service.css';
 
@@ -62,10 +63,10 @@ export default function ServicePage() {
        * DO NOT CHANGE
        */
       const [categoryRes, providerRes] = await Promise.all([
-        fetch('/api/categories', {
+        apiFetch('/api/categories', {
           cache: 'no-store',
         }),
-        fetch('/api/members', {
+        apiFetch('/api/members', {
           cache: 'no-store',
         }),
       ]);
@@ -232,67 +233,7 @@ export default function ServicePage() {
 
   return (
     <main className="service-page">
-
-      {/* =====================================================
-          HEADER
-      ===================================================== */}
-
-      <header className="service-header">
-
-        <div className="service-header-inner">
-
-          <Link
-            href="/"
-            className="service-brand"
-          >
-            <div className="brand-logo">
-              ✦
-            </div>
-
-            <div className="brand-content">
-              <strong>
-                AmbalNagar
-              </strong>
-
-              <span>
-                Community Services
-              </span>
-            </div>
-          </Link>
-
-          <nav className="service-navigation">
-
-            <Link href="/">
-              Home
-            </Link>
-
-            <Link
-              href="/service"
-              className="active"
-            >
-              Services
-            </Link>
-
-            <Link href="/events">
-              Events
-            </Link>
-
-            <Link href="/newslist">
-              News
-            </Link>
-
-          </nav>
-
-          <Link
-            href="/"
-            className="header-home"
-          >
-            Home
-          </Link>
-
-        </div>
-
-      </header>
+      <SiteNavbar />
 
       {/* =====================================================
           HERO

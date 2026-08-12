@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 import Link from 'next/link';
 import { FormEvent, useEffect, useState } from 'react';
@@ -51,7 +52,7 @@ export default function AdminUsersPage() {
 
   async function loadUsers() {
     try {
-      const res = await fetch('/api/users');
+      const res = await apiFetch('/api/users');
       const data = await res.json();
       setUsers(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -109,7 +110,7 @@ export default function AdminUsersPage() {
 
     try {
       const url = editMode ? '/api/updateUser' : '/api/addUser';
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -132,7 +133,7 @@ export default function AdminUsersPage() {
     }
     if (!confirm(`Delete user "${uname}" ?`)) return;
     try {
-      const res = await fetch(`/api/deleteAdmin/${encodeURIComponent(uname)}`, {
+      const res = await apiFetch(`/api/deleteAdmin/${encodeURIComponent(uname)}`, {
         method: 'DELETE',
       });
       const data = await res.json();

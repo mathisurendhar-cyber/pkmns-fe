@@ -1,6 +1,7 @@
 'use client';
 
-import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
+import SiteNavbar from '@/components/layout/SiteNavbar';
 import { useEffect, useMemo, useState } from 'react';
 import './events.css';
 
@@ -42,7 +43,6 @@ function groupEvents(list: EventItem[]) {
 }
 
 export default function EventsPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [upcoming, setUpcoming] = useState<Group[]>([]);
   const [past, setPast] = useState<Group[]>([]);
   const [modal, setModal] = useState<{
@@ -51,7 +51,7 @@ export default function EventsPage() {
   } | null>(null);
 
   useEffect(() => {
-    fetch('/api/events')
+    apiFetch('/api/events')
       .then((r) => r.json())
       .then((result) => {
         const events: EventItem[] = Array.isArray(result)
@@ -70,31 +70,7 @@ export default function EventsPage() {
 
   return (
     <div className="events-page">
-      <header>
-        <div className="header-container">
-          <div className="brand-flex">
-            <img src="/img/logo.png" alt="Logo" />
-            <span>Sri AmbalNagar Makkal Nalvazhu Sangam</span>
-          </div>
-          <nav>
-            <ul className={menuOpen ? 'show' : ''}>
-              <Link href="/">Home</Link>
-              <Link href="/about">About Us</Link>
-              <Link href="/members">Members</Link>
-              <Link href="/events">Events</Link>
-              <Link href="/contact">Contact Us</Link>
-              <Link href="/login">Login</Link>
-            </ul>
-          </nav>
-          <button
-            type="button"
-            className="menu-toggle"
-            onClick={() => setMenuOpen((v) => !v)}
-          >
-            {menuOpen ? '×' : '☰'}
-          </button>
-        </div>
-      </header>
+      <SiteNavbar />
 
       <section className="hero-section">
         <h1>Events & Gallery</h1>

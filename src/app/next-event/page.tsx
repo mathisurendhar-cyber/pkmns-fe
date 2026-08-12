@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { FormEvent, useEffect, useState } from 'react';
 import { requireAuth } from '@/lib/auth';
@@ -44,7 +45,7 @@ export default function NextEventPage() {
 
   async function loadEvents() {
     try {
-      const res = await fetch('/api/events', {
+      const res = await apiFetch('/api/events', {
         cache: 'no-store',
       });
 

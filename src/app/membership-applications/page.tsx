@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { useEffect, useState } from 'react';
 import { requireAuth } from '@/lib/auth';
@@ -41,7 +42,7 @@ export default function MembershipApplicationsPage() {
     try {
       setLoading(true);
 
-      const res = await fetch('/api/admin/applications', {
+      const res = await apiFetch('/api/admin/applications', {
         cache: 'no-store',
       });
 
@@ -83,7 +84,7 @@ export default function MembershipApplicationsPage() {
 
   async function updateStatus(id: string, status: string) {
     try {
-      const res = await fetch(`/api/admin/update/${id}`, {
+      const res = await apiFetch(`/api/admin/update/${id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

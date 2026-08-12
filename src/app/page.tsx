@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch } from '@/lib/api';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getCurrentUser } from '@/lib/auth';
@@ -34,7 +35,7 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    fetch('/api/news')
+    apiFetch('/api/news')
       .then((r) => r.json())
       .then((data) => {
         if (data.news?.length) {

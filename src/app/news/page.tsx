@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { FormEvent, useEffect, useState } from 'react';
 import { requireAuth } from '@/lib/auth';
@@ -75,7 +76,7 @@ export default function NewsPage() {
     }
 
     try {
-      const res = await fetch('/api/news', {
+      const res = await apiFetch('/api/news', {
         method: 'POST',
         body: formData,
       });

@@ -13,45 +13,6 @@
       min-height:100vh;
       color:#0f172a;
     }
-
-    /* HEADER (same as about.html) */
-    header{
-      background:#bc3208;
-      padding:10
-      px 0;
-      box-shadow:0 8px 25px rgba(188,50,8,0.3);
-      position:fixed;width:100%;top:0;z-index:1000;
-    }
-    .header-container{
-      max-width:1200px;margin:0 auto;padding:0 20px;
-      display:flex;align-items:center;justify-content:space-between;
-    }
-    .brand-flex{
-      display:flex;align-items:center;gap:14px;color:#fff;
-      font-weight:700;font-size:19px;
-    }
-    .brand-flex img{
-      height:54px;width:54px;border-radius:50%;background:#fff;
-      padding:4px;box-shadow:0 4px 12px rgba(0,0,0,0.2);object-fit:cover;
-    }
-    nav ul{
-      display:flex;gap:14px;list-style:none;margin:0;padding:0;
-    }
-    nav ul a{
-      color:#fff;font-weight:600;text-decoration:none;
-      padding:8px 16px;border-radius:25px;font-size:0.92rem;
-      transition:all .2s ease;
-    }
-    nav ul a:hover,
-    nav ul a.active{
-      background:linear-gradient(135deg,#fff,#f3f4f6);
-      color:#111827;transform:scale(1.05);
-    }
-    .menu-toggle{
-      display:none;font-size:26px;cursor:pointer;background:#fff;
-      color:#002d80;border:none;border-radius:10px;padding:6px 12px;
-    }
-    .contact-page>*:not(header){padding-top:100px;}
     .contact-main {
       max-width: 960px;
       margin: 60px auto 40px auto;
@@ -147,39 +108,4 @@
     @media (max-width: 640px) {
       .contact-main { margin: 30px 5vw; }
       .contact-form input, .contact-form textarea { font-size: 0.98rem; }
-    }
-
-    /* MOBILE NAV FIX */
-    @media (max-width: 600px) {
-      .header-container {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-      }
-      .menu-toggle {
-        display: block;
-      }
-      nav {
-        width: 100%;
-      }
-      nav ul.menu {
-        flex-direction: column;
-        width: 100vw;
-        position: absolute;
-        top: 62px;
-        right: 0;
-        background: #0052cc;
-        border-radius: 0 0 10px 10px;
-        display: none;
-        padding: 10px 0;
-        z-index: 1999;
-      }
-      nav ul.menu.show {
-        display: flex;
-      }
-      nav ul.menu li {
-        width: 100%;
-        margin: 4px 0;
-        text-align: center;
-      }
     }

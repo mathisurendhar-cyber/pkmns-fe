@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { useEffect, useState } from 'react';
 import { requireAuth } from '@/lib/auth';
@@ -35,7 +36,7 @@ export default function OfficeBearersAdminPage() {
 
   async function loadBearers() {
     try {
-      const res = await fetch('/api/office-bearers');
+      const res = await apiFetch('/api/office-bearers');
 
       const data = await res.json();
 
@@ -130,7 +131,7 @@ export default function OfficeBearersAdminPage() {
         method = 'PUT';
       }
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         body: formData,
       });

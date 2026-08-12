@@ -1,5 +1,7 @@
 'use client';
 
+import { apiFetch } from '@/lib/api';
+import SiteNavbar from '@/components/layout/SiteNavbar';
 import { FormEvent, useEffect, useState } from 'react';
 import './membership.css';
 
@@ -12,7 +14,7 @@ export default function MembershipPage() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    fetch('/api/qr?upi=makkalnalvazhvusangam@tmb')
+    apiFetch('/api/qr?upi=makkalnalvazhvusangam@tmb')
       .then((r) => r.json())
       .then((data) => {
         if (data.success) setQr(data.qr);
@@ -32,7 +34,7 @@ export default function MembershipPage() {
     }
     setSending(true);
     try {
-      const res = await fetch('/api/submit-membership', {
+      const res = await apiFetch('/api/submit-membership', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -59,6 +61,7 @@ export default function MembershipPage() {
 
   return (
     <div className="membership-page">
+      <SiteNavbar />
       <div className="bg" />
       <div className="container">
         <div className="hero">

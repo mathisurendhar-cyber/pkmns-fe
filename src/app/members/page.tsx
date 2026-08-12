@@ -1,6 +1,7 @@
 'use client';
 
-import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
+import SiteNavbar from '@/components/layout/SiteNavbar';
 import { useEffect, useState } from 'react';
 import './members.css';
 
@@ -15,12 +16,11 @@ type Member = {
 };
 
 export default function MembersPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('/api/getUsers')
+    apiFetch('/api/getUsers')
       .then((r) => r.json())
       .then((users: Member[]) => {
         setMembers(
@@ -32,31 +32,7 @@ export default function MembersPage() {
 
   return (
     <div className="members-page">
-      <header>
-        <div className="header-container">
-          <div className="brand-flex">
-            <img src="/img/logo.png" alt="Logo" />
-            <span>Sri AmbalNagar Makkal Nalvazhu Sangam</span>
-          </div>
-          <nav>
-            <ul className={menuOpen ? 'show' : ''}>
-              <Link href="/">Home</Link>
-              <Link href="/about">About Us</Link>
-              <Link href="/members">Members</Link>
-              <Link href="/events">Events</Link>
-              <Link href="/contact">Contact Us</Link>
-              <Link href="/login">Login</Link>
-            </ul>
-          </nav>
-          <button
-            type="button"
-            className="menu-toggle"
-            onClick={() => setMenuOpen((v) => !v)}
-          >
-            {menuOpen ? '×' : '☰'}
-          </button>
-        </div>
-      </header>
+      <SiteNavbar />
 
       <section className="members-hero">
         <h1>Members Directory</h1>

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { FormEvent, useEffect, useRef, useState } from 'react';
+import { apiFetch } from '@/lib/api';
 import { setCurrentUser } from '@/lib/auth';
 import './login.css';
 
@@ -32,7 +33,7 @@ export default function LoginPage() {
     setSending(true);
     setOtpMsg('');
     try {
-      const res = await fetch('/api/login-step1', {
+      const res = await apiFetch('/api/login-step1', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -40,12 +41,19 @@ export default function LoginPage() {
           password: password.trim(),
           email: email.trim(),
         }),
+        onRetry: (attempt, max) => {
+          setOtpMsgColor('#1d4ed8');
+          setOtpMsg(
+            `Server is starting (${attempt}/${max}). OTP will send after it wakes — this can take about a minute.`,
+          );
+        },
       });
-      if (!res.ok) {
+      const type = res.headers.get('content-type') || '';
+      if (!res.ok || !type.includes('application/json')) {
         setOtpMsgColor('red');
         setOtpMsg(
           res.status === 503
-            ? 'Server unavailable. Backend is not reachable — check API_URL on Vercel.'
+            ? 'Backend is still sleeping. Wait a minute and tap Send OTP again.'
             : `Request failed (${res.status}). Please try again.`,
         );
         return;
@@ -78,11 +86,21 @@ export default function LoginPage() {
     setVerifying(true);
     setOtpMsg('');
     try {
-      const res = await fetch('/api/login-step2', {
+      const res = await apiFetch('/api/login-step2', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: step1Email, otp: value }),
+        onRetry: (attempt, max) => {
+          setOtpMsgColor('#1d4ed8');
+          setOtpMsg(`Server is starting (${attempt}/${max}). Please wait...`);
+        },
       });
+      const type = res.headers.get('content-type') || '';
+      if (!type.includes('application/json')) {
+        setOtpMsgColor('red');
+        setOtpMsg('Server is still starting. Please try Verify again.');
+        return;
+      }
       const data = await res.json();
       if (!data.success) {
         setOtpMsgColor('red');

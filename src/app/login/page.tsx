@@ -1,78 +1,112 @@
 'use client';
 
-import Link from 'next/link';
+
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import { setCurrentUser } from '@/lib/auth';
 import './login.css';
 
 function maskEmail(email: string) {
-  const [local, domain] = email.split('@');
-  if (!local || !domain) return email;
-  const visible = local.slice(0, 1);
-  return `${visible}***@${domain}`;
+  const parts = email.split('@');
+
+  if (parts.length !== 2) return email;
+
+  const local = parts[0];
+  const domain = parts[1];
+
+  return `${local.slice(0, 1)}***@${domain}`;
 }
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
+
   const [otp, setOtp] = useState('');
   const [showOtp, setShowOtp] = useState(false);
-  const [otpMsg, setOtpMsg] = useState('');
-  const [otpMsgColor, setOtpMsgColor] = useState('green');
+
   const [step1Email, setStep1Email] = useState('');
+
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [popupOpen, setPopupOpen] = useState(false);
+
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState<'success' | 'error'>(
+    'success',
+  );
+
   const otpInputRef = useRef<HTMLInputElement>(null);
   const verifyingRef = useRef(false);
 
-  async function onSubmit(e: FormEvent) {
+  async function handleLogin(e: FormEvent) {
     e.preventDefault();
+
+    if (!username.trim() || !password.trim() || !email.trim()) {
+      setMessageType('error');
+      setMessage('Please enter username, password and email.');
+      return;
+    }
+
     setSending(true);
-    setOtpMsg('');
+    setMessage('');
+
     try {
       const res = await apiFetch('/api/login-step1', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           username: username.trim(),
           password: password.trim(),
           email: email.trim(),
         }),
         onRetry: (attempt, max) => {
-          setOtpMsgColor('#1d4ed8');
-          setOtpMsg(
-            `Server is starting (${attempt}/${max}). OTP will send after it wakes — this can take about a minute.`,
+          setMessageType('success');
+
+          setMessage(
+            `Server is starting (${attempt}/${max}). Please wait...`,
           );
         },
       });
-      const type = res.headers.get('content-type') || '';
-      if (!res.ok || !type.includes('application/json')) {
-        setOtpMsgColor('red');
-        setOtpMsg(
+
+      const contentType = res.headers.get('content-type') || '';
+
+      if (!res.ok || !contentType.includes('application/json')) {
+        setMessageType('error');
+
+        setMessage(
           res.status === 503
-            ? 'Backend is still sleeping. Wait a minute and tap Send OTP again.'
-            : `Request failed (${res.status}). Please try again.`,
+            ? 'Backend is still starting. Please try again.'
+            : `Request failed (${res.status}).`,
         );
+
         return;
       }
+
       const data = await res.json();
+
       if (!data.success) {
-        setOtpMsgColor('red');
-        setOtpMsg(data.message || 'Login failed');
+        setMessageType('error');
+        setMessage(data.message || 'Invalid credentials.');
         return;
       }
+
       setStep1Email(email.trim());
-      setShowOtp(true);
+
       setOtp('');
-      setOtpMsgColor('green');
-      setOtpMsg(data.message || 'OTP sent to your email');
-      setPopupOpen(true);
+      setShowOtp(true);
+
+      setMessageType('success');
+      setMessage(data.message || 'OTP sent to your email.');
+
+      setTimeout(() => {
+        otpInputRef.current?.focus();
+      }, 100);
+
     } catch {
-      setOtpMsgColor('red');
-      setOtpMsg('Network error. Please try again.');
+      setMessageType('error');
+      setMessage('Network error. Please try again.');
     } finally {
       setSending(false);
     }
@@ -80,38 +114,49 @@ export default function LoginPage() {
 
   async function verifyOtp(code?: string) {
     const value = (code ?? otp).trim();
-    if (value.length !== 6 || verifyingRef.current) return;
+
+    if (value.length !== 6 || verifyingRef.current) {
+      return;
+    }
 
     verifyingRef.current = true;
     setVerifying(true);
-    setOtpMsg('');
+    setMessage('');
+
     try {
       const res = await apiFetch('/api/login-step2', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: step1Email, otp: value }),
-        onRetry: (attempt, max) => {
-          setOtpMsgColor('#1d4ed8');
-          setOtpMsg(`Server is starting (${attempt}/${max}). Please wait...`);
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          email: step1Email,
+          otp: value,
+        }),
       });
-      const type = res.headers.get('content-type') || '';
-      if (!type.includes('application/json')) {
-        setOtpMsgColor('red');
-        setOtpMsg('Server is still starting. Please try Verify again.');
+
+      const contentType = res.headers.get('content-type') || '';
+
+      if (!res.ok || !contentType.includes('application/json')) {
+        setMessageType('error');
+        setMessage('Server error. Please try again.');
         return;
       }
+
       const data = await res.json();
+
       if (!data.success) {
-        setOtpMsgColor('red');
-        setOtpMsg(data.message || 'Invalid OTP');
+        setMessageType('error');
+        setMessage(data.message || 'Invalid OTP.');
         return;
       }
+
       setCurrentUser(data.user);
+
       window.location.href = '/dashboard';
     } catch {
-      setOtpMsgColor('red');
-      setOtpMsg('Network error. Please try again.');
+      setMessageType('error');
+      setMessage('Network error. Please try again.');
     } finally {
       setVerifying(false);
       verifyingRef.current = false;
@@ -119,234 +164,402 @@ export default function LoginPage() {
   }
 
   useEffect(() => {
-    if (otp.trim().length === 6 && showOtp) {
+    if (showOtp && otp.length === 6) {
       void verifyOtp(otp);
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [otp, showOtp]);
 
-  function closePopup() {
-    setPopupOpen(false);
-    setTimeout(() => otpInputRef.current?.focus(), 50);
+  function backToLogin() {
+    setShowOtp(false);
+    setOtp('');
+    setMessage('');
   }
 
   return (
     <div className="login-page">
-      <header className="nav-wrap">
-        <div className="nav-bar">
-          <div className="nav-left">
-            <div className="nav-logo-mini">
-              <img src="/img/logo.png" alt="Logo" />
-            </div>
-            <div className="nav-title">Sri Ambal Nagar Admin</div>
-          </div>
-          <div className="nav-right">
-            <Link href="/" className="nav-link">
-              <i className="fas fa-home" />
-              <span>Home</span>
-            </Link>
-            <Link href="/about" className="nav-link">
-              <i className="fas fa-info-circle" />
-              <span>About</span>
-            </Link>
-            <Link href="/contact" className="nav-link">
-              <i className="fas fa-phone" />
-              <span>Contact</span>
-            </Link>
-            <div className="nav-pill">
-              <i className="fas fa-shield-alt" style={{ marginRight: 6 }} />
-              Admin Login
-            </div>
-          </div>
+
+      {/* LEFT ORANGE PANEL */}
+
+      <section className="login-brand">
+
+        <div className="brand-rays" />
+
+        <div className="sun-circle">
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
         </div>
-      </header>
 
-      <main className="page-main">
-        <section className="login-left">
-          <div className="logo-row">
-            <div className="logo-wrap">
-              <img src="/img/logo.png" alt="Sri Ambal Nagar Logo" />
-            </div>
-            <div>
-              <div className="brand-text-main">Sri Ambal Nagar</div>
-              <div className="brand-text-sub">Admin Portal</div>
-            </div>
-          </div>
-          <p className="welcome-line">
-            Welcome to the secure administration dashboard for{' '}
-            <span>Sri Ambal Nagar Peoples Welfare Association</span>
-          </p>
-          <div className="feature-grid">
-            <div className="feature-item">
-              <div className="feature-icon" style={{ color: '#22c55e' }}>
-                <i className="fas fa-lock" />
-              </div>
-              <span>2FA Email OTP Protection</span>
-            </div>
-            <div className="feature-item">
-              <div className="feature-icon" style={{ color: '#a855f7' }}>
-                <i className="fas fa-users" />
-              </div>
-              <span>Complete Member Management</span>
-            </div>
-            <div className="feature-item">
-              <div className="feature-icon" style={{ color: '#38bdf8' }}>
-                <i className="fas fa-calendar" />
-              </div>
-              <span>Events & Notices</span>
-            </div>
-            <div className="feature-item">
-              <div className="feature-icon" style={{ color: '#f97316' }}>
-                <i className="fas fa-images" />
-              </div>
-              <span>Gallery Uploads</span>
-            </div>
-          </div>
-          <div className="login-left-footer">
-            Need access or forgot credentials? Please contact the association
-            secretary or IT volunteer.
-          </div>
-        </section>
+        <div className="brand-top">
 
-        <section className="login-right">
-          <h2 className="login-title">Secure Login</h2>
-          <p className="login-sub">
-            Enter credentials & verify with OTP to access admin dashboard.
+          <div className="brand-logo">
+            <img
+              src="/img/logo.png"
+              alt="Sri Ambal Nagar"
+            />
+          </div>
+
+          <div className="brand-name">
+            Sri Ambal Nagar
+
+            <span>
+              Admin Portal
+            </span>
+          </div>
+
+        </div>
+
+
+        <div className="brand-content">
+
+          <div className="eyebrow">
+            Peoples Welfare Association
+          </div>
+
+          <h1>
+            Every member,
+            <br />
+            <em>one secure door in.</em>
+          </h1>
+
+          <p>
+            Access member records, notices, and the gallery archive
+            through a secure administration portal protected by
+            email verification.
           </p>
 
-          <form onSubmit={onSubmit} autoComplete="off">
-            <div className="form-group">
-              <label htmlFor="username">Username</label>
-              <div className="input-wrap">
-                <input
-                  id="username"
-                  type="text"
-                  required
-                  placeholder="Your username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  disabled={sending}
-                />
-                <span className="input-icon">
-                  <i className="fas fa-user" />
-                </span>
-              </div>
-            </div>
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <div className="input-wrap">
-                <input
-                  id="password"
-                  type="password"
-                  required
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={sending}
-                />
-                <span className="input-icon">
-                  <i className="fas fa-lock" />
-                </span>
-              </div>
-            </div>
-            <div className="form-group">
-              <label htmlFor="email">Email Address</label>
-              <div className="input-wrap">
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={sending}
-                />
-                <span className="input-icon">
-                  <i className="fas fa-envelope" />
-                </span>
-              </div>
-            </div>
-            <button type="submit" className="login-btn" disabled={sending}>
-              <i className="fas fa-paper-plane" />
-              {sending ? 'Sending OTP...' : 'Send OTP'}
-            </button>
-          </form>
+        </div>
 
-          {showOtp && (
-            <div className="otp-box">
-              <div className="form-group">
-                <label htmlFor="otp">Enter OTP</label>
-                <div className="input-wrap">
+
+        <div className="brand-footer">
+
+          <div>
+            <span className="footer-dot" />
+            Email OTP verified
+          </div>
+
+          <div>
+            <span className="footer-dot" />
+            Admins only
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* RIGHT FORM */}
+
+      <section className="login-form-side">
+
+        <div className="form-wrap">
+
+          {!showOtp ? (
+
+            <>
+
+              <div className="form-heading">
+
+                <div className="heading-line" />
+
+                <span>
+                  ADMIN ACCESS
+                </span>
+
+              </div>
+
+              <h2>
+                Sign in
+              </h2>
+
+              <p className="form-description">
+                Enter your admin credentials to continue.
+                A verification code will be sent to your
+                registered email.
+              </p>
+
+
+              <form onSubmit={handleLogin}>
+
+                {/* USERNAME */}
+
+                <div className="field">
+
+                  <label htmlFor="username">
+                    Username
+                  </label>
+
                   <input
-                    id="otp"
-                    ref={otpInputRef}
+                    id="username"
                     type="text"
-                    inputMode="numeric"
-                    maxLength={6}
-                    placeholder="6-digit code"
-                    value={otp}
+                    placeholder="e.g. secretary_admin"
+                    autoComplete="username"
+                    value={username}
+                    disabled={sending}
                     onChange={(e) =>
-                      setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
+                      setUsername(e.target.value)
                     }
-                    disabled={verifying}
                   />
-                  <span className="input-icon">
-                    <i className="fas fa-key" />
-                  </span>
+
+                  <div className="input-line" />
+
                 </div>
-              </div>
+
+
+                {/* PASSWORD */}
+
+                <div className="field">
+
+                  <label htmlFor="password">
+                    Password
+                  </label>
+
+                  <input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    value={password}
+                    disabled={sending}
+                    onChange={(e) =>
+                      setPassword(e.target.value)
+                    }
+                  />
+
+                  <div className="input-line" />
+
+                </div>
+
+
+                {/* EMAIL */}
+
+                <div className="field">
+
+                  <label htmlFor="email">
+                    Registered email
+                  </label>
+
+                  <input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    value={email}
+                    disabled={sending}
+                    onChange={(e) =>
+                      setEmail(e.target.value)
+                    }
+                  />
+
+                  <div className="input-line" />
+
+                </div>
+
+
+                {message && (
+                  <div
+                    className={`login-message ${
+                      messageType === 'error'
+                        ? 'error'
+                        : 'success'
+                    }`}
+                  >
+                    {message}
+                  </div>
+                )}
+
+
+                <button
+                  type="submit"
+                  className="login-submit"
+                  disabled={sending}
+                >
+                  <span>
+                    {sending
+                      ? 'Sending code...'
+                      : 'Send verification code'}
+                  </span>
+
+                  {!sending && (
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M5 12h14" />
+                      <path d="M13 5l7 7-7 7" />
+                    </svg>
+                  )}
+                </button>
+
+              </form>
+
+
+              <p className="help-text">
+                Locked out or new to the committee? Contact the
+                association secretary for access.
+              </p>
+
+            </>
+
+          ) : (
+
+            /* OTP SCREEN */
+
+            <>
+
               <button
                 type="button"
-                className="login-btn"
-                onClick={() => verifyOtp()}
-                disabled={verifying || otp.trim().length !== 6}
+                className="back-button"
+                onClick={backToLogin}
               >
-                <i className="fas fa-check-circle" />
-                {verifying ? 'Verifying...' : 'Verify & Login'}
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+
+                Back
               </button>
-              <p className="otp-msg" style={{ color: otpMsgColor }}>
-                {otpMsg}
+
+
+              <div className="form-heading">
+
+                <div className="heading-line" />
+
+                <span>
+                  VERIFICATION
+                </span>
+
+              </div>
+
+
+              <h2>
+                Check your inbox
+              </h2>
+
+              <p className="form-description">
+                Enter the 6-digit verification code sent to
+                your registered email.
               </p>
-            </div>
+
+
+              <div className="email-preview">
+                {maskEmail(step1Email)}
+              </div>
+
+
+              <div className="otp-container">
+
+                <label>
+                  Verification code
+                </label>
+
+                <input
+                  ref={otpInputRef}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  autoComplete="one-time-code"
+                  placeholder="000000"
+                  value={otp}
+                  disabled={verifying}
+                  onChange={(e) =>
+                    setOtp(
+                      e.target.value
+                        .replace(/\D/g, '')
+                        .slice(0, 6),
+                    )
+                  }
+                />
+
+              </div>
+
+
+              {message && (
+                <div
+                  className={`login-message ${
+                    messageType === 'error'
+                      ? 'error'
+                      : 'success'
+                  }`}
+                >
+                  {message}
+                </div>
+              )}
+
+
+              <button
+                type="button"
+                className="login-submit"
+                disabled={
+                  verifying ||
+                  otp.length !== 6
+                }
+                onClick={() => verifyOtp()}
+              >
+                <span>
+                  {verifying
+                    ? 'Verifying...'
+                    : 'Verify & enter dashboard'}
+                </span>
+
+                {!verifying && (
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                )}
+
+              </button>
+
+
+              <div className="otp-note">
+                The verification code expires in 5 minutes.
+              </div>
+
+            </>
+
           )}
 
-          {!showOtp && otpMsg && (
-            <p className="otp-msg" style={{ color: otpMsgColor }}>
-              {otpMsg}
-            </p>
-          )}
-
-          <div className="helper-text">
-            Protected by advanced two-factor authentication. Only authorized
-            admins are allowed to login.
-          </div>
-        </section>
-      </main>
-
-      {popupOpen && (
-        <div className="otp-popup-backdrop" onClick={closePopup}>
-          <div
-            className="otp-popup"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="otp-popup-title"
-          >
-            <div className="otp-popup-icon">
-              <i className="fas fa-envelope-open-text" />
-            </div>
-            <h3 id="otp-popup-title">OTP Sent</h3>
-            <p>
-              A 6-digit verification code was sent to{' '}
-              <strong>{maskEmail(step1Email)}</strong>. Check your inbox and
-              enter the code below. It expires in 5 minutes.
-            </p>
-            <button type="button" className="otp-popup-btn" onClick={closePopup}>
-              Enter OTP
-            </button>
-          </div>
         </div>
-      )}
+
+
+        <div className="form-footer">
+
+          <span>
+            © Sri Ambal Nagar
+          </span>
+
+          <span>
+            Secure Administration
+          </span>
+
+        </div>
+
+      </section>
+
     </div>
   );
 }

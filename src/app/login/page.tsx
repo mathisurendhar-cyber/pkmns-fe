@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import { setCurrentUser } from '@/lib/auth';
@@ -9,7 +9,7 @@ import './login.css';
 function maskEmail(email: string) {
   const parts = email.split('@');
 
-  if (parts.length !== 2) return email;
+  if (parts.length !== 2) return email;  
 
   const local = parts[0];
   const domain = parts[1];

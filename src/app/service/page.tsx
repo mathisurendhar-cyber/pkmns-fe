@@ -50,6 +50,7 @@ export default function ServicePage() {
    * NO AUTH CHECK HERE
    * Service page is public.
    */
+
   useEffect(() => {
     loadData();
   }, []);
@@ -62,10 +63,12 @@ export default function ServicePage() {
        * EXISTING BACKEND API
        * DO NOT CHANGE
        */
+
       const [categoryRes, providerRes] = await Promise.all([
         apiFetch('/api/categories', {
           cache: 'no-store',
         }),
+
         apiFetch('/api/members', {
           cache: 'no-store',
         }),
@@ -85,52 +88,120 @@ export default function ServicePage() {
           [];
 
       setCategories(
-        categoryList.map((item: Record<string, unknown>) => ({
-          id: String(item.id ?? ''),
-          name: String(item.name || item.category || 'Service'),
-          count: Number(item.count || item.providers_count || 0),
-        })),
+        categoryList.map(
+          (item: Record<string, unknown>) => ({
+            id: String(item.id ?? ''),
+            name: String(
+              item.name ||
+                item.category ||
+                'Service',
+            ),
+            count: Number(
+              item.count ||
+                item.providers_count ||
+                0,
+            ),
+          }),
+        ),
       );
 
       const mappedProviders = providerList.map(
         (item: Record<string, unknown>) => ({
           id: String(item.id ?? ''),
+
           name: String(
             item.name ||
               item.full_name ||
               item.member_name ||
               'Service Professional',
           ),
+
           phone: String(
-            item.phone || item.mobile || item.mobile_number || '',
+            item.phone ||
+              item.mobile ||
+              item.mobile_number ||
+              '',
           ),
+
           mobile: String(
-            item.mobile || item.mobile_number || item.phone || '',
+            item.mobile ||
+              item.mobile_number ||
+              item.phone ||
+              '',
           ),
-          category: String(item.category || item.category_name || ''),
+
+          category: String(
+            item.category ||
+              item.category_name ||
+              '',
+          ),
+
           category_id: String(
-            item.category_id || item.categoryId || item.category || '',
+            item.category_id ||
+              item.categoryId ||
+              item.category ||
+              '',
           ),
+
           categoryId: String(
-            item.categoryId || item.category_id || item.category || '',
+            item.categoryId ||
+              item.category_id ||
+              item.category ||
+              '',
           ),
         }),
       );
 
       setProviders(mappedProviders);
 
-      // Recompute counts from providers when API count is 0
+      /*
+       * Recompute counts from providers
+       *
+       * FIX:
+       * cat.id can be number | string.
+       * Therefore convert everything to String
+       * before calling toLowerCase().
+       */
+
       setCategories((prev) =>
         prev.map((cat) => {
-          if (cat.count && cat.count > 0) return cat;
-          const count = mappedProviders.filter((p: any) => {
-            const value = (p.category || p.category_id || '').toLowerCase();
-            return (
-              value === cat.id.toLowerCase() ||
-              value === cat.name.toLowerCase()
-            );
-          }).length;
-          return { ...cat, count };
+          if (cat.count && cat.count > 0) {
+            return cat;
+          }
+
+          const count = mappedProviders.filter(
+            (p: Provider) => {
+              const value = String(
+                p.category ??
+                  p.category_id ??
+                  '',
+              )
+                .trim()
+                .toLowerCase();
+
+              const categoryId = String(
+                cat.id ?? '',
+              )
+                .trim()
+                .toLowerCase();
+
+              const categoryName = String(
+                cat.name ?? '',
+              )
+                .trim()
+                .toLowerCase();
+
+              return (
+                value === categoryId ||
+                value === categoryName
+              );
+            },
+          ).length;
+
+          return {
+            ...cat,
+            count,
+          };
         }),
       );
     } catch (error) {
@@ -149,6 +220,7 @@ export default function ServicePage() {
     /*
      * CATEGORY FILTER
      */
+
     if (selectedCategory !== 'all') {
       result = result.filter((provider) => {
         const providerCategoryId =
@@ -170,10 +242,17 @@ export default function ServicePage() {
           '';
 
         return (
-          String(providerCategoryId) === String(selectedCategory) ||
-          providerCategory === selectedCategoryName ||
-          providerCategory === String(selectedCategory).toLowerCase() ||
-          providerCategory === selectedCategoryName.replace(/\s+/g, '_')
+          String(providerCategoryId) ===
+            String(selectedCategory) ||
+          providerCategory ===
+            selectedCategoryName ||
+          providerCategory ===
+            String(selectedCategory).toLowerCase() ||
+          providerCategory ===
+            selectedCategoryName.replace(
+              /\s+/g,
+              '_',
+            )
         );
       });
     }
@@ -181,6 +260,7 @@ export default function ServicePage() {
     /*
      * SEARCH FILTER
      */
+
     if (search.trim()) {
       const query =
         search.trim().toLowerCase();
@@ -232,11 +312,8 @@ export default function ServicePage() {
       ===================================================== */}
 
       <section className="service-intro">
-
         <div className="intro-container">
-
           <div className="intro-left">
-
             <div className="intro-tag">
               COMMUNITY SERVICE DIRECTORY
             </div>
@@ -255,7 +332,6 @@ export default function ServicePage() {
             </p>
 
             <div className="hero-search">
-
               <span className="hero-search-icon">
                 ⌕
               </span>
@@ -280,15 +356,11 @@ export default function ServicePage() {
                   ×
                 </button>
               )}
-
             </div>
-
           </div>
 
           <div className="intro-right">
-
             <div className="intro-stat">
-
               <div className="intro-stat-icon orange">
                 ▦
               </div>
@@ -300,11 +372,9 @@ export default function ServicePage() {
               <span>
                 Service Categories
               </span>
-
             </div>
 
             <div className="intro-stat">
-
               <div className="intro-stat-icon blue">
                 ♙
               </div>
@@ -316,11 +386,9 @@ export default function ServicePage() {
               <span>
                 Professionals
               </span>
-
             </div>
 
             <div className="intro-stat">
-
               <div className="intro-stat-icon green">
                 ☎
               </div>
@@ -332,13 +400,9 @@ export default function ServicePage() {
               <span>
                 Direct Contact
               </span>
-
             </div>
-
           </div>
-
         </div>
-
       </section>
 
       {/* =====================================================
@@ -346,11 +410,8 @@ export default function ServicePage() {
       ===================================================== */}
 
       <section className="directory-section">
-
         <div className="directory-header">
-
           <div>
-
             <div className="section-label">
               SERVICE DIRECTORY
             </div>
@@ -362,11 +423,9 @@ export default function ServicePage() {
             <p>
               Choose a category or search for a service.
             </p>
-
           </div>
 
           <div className="result-badge">
-
             <strong>
               {filteredProviders.length}
             </strong>
@@ -374,9 +433,7 @@ export default function ServicePage() {
             <span>
               Results
             </span>
-
           </div>
-
         </div>
 
         {/* =====================================================
@@ -384,11 +441,8 @@ export default function ServicePage() {
         ===================================================== */}
 
         <div className="category-section">
-
           <div className="section-heading">
-
             <div>
-
               <div className="section-label">
                 EXPLORE
               </div>
@@ -396,7 +450,6 @@ export default function ServicePage() {
               <h3>
                 Categories
               </h3>
-
             </div>
 
             {selectedCategory !== 'all' && (
@@ -410,7 +463,6 @@ export default function ServicePage() {
                 Clear Filter
               </button>
             )}
-
           </div>
 
           {loading ? (
@@ -419,7 +471,6 @@ export default function ServicePage() {
             </div>
           ) : (
             <div className="category-grid">
-
               <button
                 type="button"
                 className={`category-card ${
@@ -431,7 +482,6 @@ export default function ServicePage() {
                   setSelectedCategory('all')
                 }
               >
-
                 <div className="category-icon all">
                   ✦
                 </div>
@@ -443,14 +493,12 @@ export default function ServicePage() {
                 <span>
                   {providers.length} Professionals
                 </span>
-
               </button>
 
               {categories.map((category) => (
-
                 <button
                   type="button"
-                  key={category.id}
+                  key={String(category.id)}
                   className={`category-card ${
                     String(selectedCategory) ===
                     String(category.id)
@@ -463,7 +511,6 @@ export default function ServicePage() {
                     )
                   }
                 >
-
                   <div className="category-icon">
                     {getIcon(category.name)}
                   </div>
@@ -473,16 +520,13 @@ export default function ServicePage() {
                   </strong>
 
                   <span>
-                    {category.count || 0} Professionals
+                    {category.count || 0}{' '}
+                    Professionals
                   </span>
-
                 </button>
-
               ))}
-
             </div>
           )}
-
         </div>
 
         {/* =====================================================
@@ -490,11 +534,8 @@ export default function ServicePage() {
         ===================================================== */}
 
         <div className="professionals-section">
-
           <div className="section-heading">
-
             <div>
-
               <div className="section-label">
                 DIRECTORY
               </div>
@@ -502,25 +543,19 @@ export default function ServicePage() {
               <h3>
                 Community Professionals
               </h3>
-
             </div>
 
             <span className="available-count">
               {filteredProviders.length} Available
             </span>
-
           </div>
 
           {loading ? (
-
             <div className="loading-box">
               Loading professionals...
             </div>
-
           ) : filteredProviders.length === 0 ? (
-
             <div className="empty-box">
-
               <div className="empty-icon">
                 ⌕
               </div>
@@ -543,16 +578,11 @@ export default function ServicePage() {
               >
                 Reset Search
               </button>
-
             </div>
-
           ) : (
-
             <div className="professional-grid">
-
               {filteredProviders.map(
                 (provider) => {
-
                   const name =
                     provider.name ||
                     'Service Professional';
@@ -567,20 +597,19 @@ export default function ServicePage() {
                     'Community Service';
 
                   return (
-
                     <article
                       className="professional-card"
-                      key={provider.id}
+                      key={String(
+                        provider.id ??
+                          `${name}-${phone}`,
+                      )}
                     >
-
                       <div className="professional-top">
-
                         <div className="professional-avatar">
                           {getInitial(name)}
                         </div>
 
                         <div className="professional-details">
-
                           <h4>
                             {name}
                           </h4>
@@ -588,27 +617,23 @@ export default function ServicePage() {
                           <span>
                             {category}
                           </span>
-
                         </div>
-
                       </div>
 
                       <div className="professional-line" />
 
                       <div className="phone-row">
-
                         <span>
                           PHONE
                         </span>
 
                         <strong>
-                          {phone || 'Not Available'}
+                          {phone ||
+                            'Not Available'}
                         </strong>
-
                       </div>
 
                       {phone && (
-
                         <a
                           href={`tel:${phone}`}
                           className="contact-btn"
@@ -618,21 +643,14 @@ export default function ServicePage() {
                           </span>
 
                           Contact Professional
-
                         </a>
-
                       )}
-
                     </article>
-
                   );
                 },
               )}
-
             </div>
-
           )}
-
         </div>
 
         {/* =====================================================
@@ -640,13 +658,11 @@ export default function ServicePage() {
         ===================================================== */}
 
         <div className="service-footer">
-
           <div className="footer-icon">
             ✓
           </div>
 
           <div>
-
             <strong>
               Need a local service?
             </strong>
@@ -655,13 +671,9 @@ export default function ServicePage() {
               Browse the directory and connect
               directly with a community professional.
             </p>
-
           </div>
-
         </div>
-
       </section>
-
     </main>
   );
 }

@@ -123,7 +123,7 @@ export default function ServicePage() {
       setCategories((prev) =>
         prev.map((cat) => {
           if (cat.count && cat.count > 0) return cat;
-          const count = mappedProviders.filter((p) => {
+          const count = mappedProviders.filter((p: any) => {
             const value = (p.category || p.category_id || '').toLowerCase();
             return (
               value === cat.id.toLowerCase() ||

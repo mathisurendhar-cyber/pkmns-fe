@@ -44,7 +44,7 @@
     0 7px 22px rgba(244, 90, 5, 0.22);
 }
 
-.members-page .header-container {
+.header-container {
   width: 100%;
   max-width: 1240px;
 
@@ -168,7 +168,7 @@
    MENU BUTTON
 ========================================================= */
 
-.members-page .menu-toggle {
+.menu-toggle {
   display: none;
 
   width: 40px;
@@ -998,7 +998,7 @@
 ========================================================= */
 
 @media (max-width: 820px) {
-  .members-page .header-container {
+  .header-container {
     height: 68px;
 
     padding: 0 18px;
@@ -1018,7 +1018,7 @@
     font-size: 8px;
   }
 
-  .members-page .menu-toggle {
+  .menu-toggle {
     display: flex;
 
     align-items: center;

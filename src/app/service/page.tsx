@@ -87,59 +87,51 @@ export default function ServicePage() {
       setCategories(
         categoryList.map((item: Record<string, unknown>) => ({
           id: String(item.id ?? ''),
-          name:
-            String(item.name || item.category || 'Service'),
-          count: Number(
-            item.count ||
-              item.providers_count ||
-              0,
-          ),
+          name: String(item.name || item.category || 'Service'),
+          count: Number(item.count || item.providers_count || 0),
         })),
       );
 
-      setProviders(
-        providerList.map((item: Record<string, unknown>) => ({
+      const mappedProviders = providerList.map(
+        (item: Record<string, unknown>) => ({
           id: String(item.id ?? ''),
-
           name: String(
             item.name ||
               item.full_name ||
               item.member_name ||
               'Service Professional',
           ),
-
           phone: String(
-            item.phone ||
-              item.mobile ||
-              item.mobile_number ||
-              '',
+            item.phone || item.mobile || item.mobile_number || '',
           ),
-
           mobile: String(
-            item.mobile ||
-              item.mobile_number ||
-              item.phone ||
-              '',
+            item.mobile || item.mobile_number || item.phone || '',
           ),
-
-          category: String(
-            item.category ||
-              item.category_name ||
-              '',
-          ),
-
+          category: String(item.category || item.category_name || ''),
           category_id: String(
-            item.category_id ||
-              item.categoryId ||
-              '',
+            item.category_id || item.categoryId || item.category || '',
           ),
-
           categoryId: String(
-            item.categoryId ||
-              item.category_id ||
-              '',
+            item.categoryId || item.category_id || item.category || '',
           ),
-        })),
+        }),
+      );
+
+      setProviders(mappedProviders);
+
+      // Recompute counts from providers when API count is 0
+      setCategories((prev) =>
+        prev.map((cat) => {
+          if (cat.count && cat.count > 0) return cat;
+          const count = mappedProviders.filter((p) => {
+            const value = (p.category || p.category_id || '').toLowerCase();
+            return (
+              value === cat.id.toLowerCase() ||
+              value === cat.name.toLowerCase()
+            );
+          }).length;
+          return { ...cat, count };
+        }),
       );
     } catch (error) {
       console.error(
@@ -178,10 +170,10 @@ export default function ServicePage() {
           '';
 
         return (
-          String(providerCategoryId) ===
-            String(selectedCategory) ||
-          providerCategory ===
-            selectedCategoryName
+          String(providerCategoryId) === String(selectedCategory) ||
+          providerCategory === selectedCategoryName ||
+          providerCategory === String(selectedCategory).toLowerCase() ||
+          providerCategory === selectedCategoryName.replace(/\s+/g, '_')
         );
       });
     }

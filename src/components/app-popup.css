@@ -1,0 +1,121 @@
+.app-popup-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
+}
+
+.app-popup {
+  width: 100%;
+  max-width: 400px;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border-radius: 22px;
+  padding: 28px 24px 22px;
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.45);
+  text-align: center;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  animation: appPopupIn 0.25s ease-out;
+}
+
+@keyframes appPopupIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.app-popup-icon {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.35rem;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.35);
+}
+
+.app-popup--success .app-popup-icon {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  box-shadow: 0 14px 30px rgba(34, 197, 94, 0.35);
+}
+
+.app-popup--error .app-popup-icon {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 14px 30px rgba(239, 68, 68, 0.35);
+}
+
+.app-popup--confirm .app-popup-icon {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  box-shadow: 0 14px 30px rgba(249, 115, 22, 0.35);
+}
+
+.app-popup h3 {
+  margin: 0 0 10px;
+  font-size: 1.3rem;
+  color: #111827;
+  font-weight: 800;
+}
+
+.app-popup p {
+  margin: 0 0 20px;
+  color: #4b5563;
+  font-size: 0.94rem;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
+.app-popup-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.app-popup-btn {
+  flex: 1;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.3);
+}
+
+.app-popup--success .app-popup-btn {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  box-shadow: 0 14px 30px rgba(34, 197, 94, 0.3);
+}
+
+.app-popup--error .app-popup-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 14px 30px rgba(239, 68, 68, 0.3);
+}
+
+.app-popup--confirm .app-popup-btn {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  box-shadow: 0 14px 30px rgba(249, 115, 22, 0.3);
+}
+
+.app-popup-btn--ghost {
+  background: #e5e7eb;
+  color: #374151;
+  box-shadow: none;
+}
+
+.app-popup-btn:hover {
+  filter: brightness(1.05);
+}

@@ -1,6 +1,7 @@
 'use client';
 
 import { apiFetch } from '@/lib/api';
+import AppPopup, { AppPopupVariant } from '@/components/AppPopup';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import './dashboard.css';
@@ -103,6 +104,19 @@ export default function DashboardPage() {
   // Stats Cycle View Mode
   const [statsCycleOn, setStatsCycleOn] = useState(false);
   const [activeStatIndex, setActiveStatIndex] = useState(0);
+  const [popup, setPopup] = useState<{
+    open: boolean;
+    variant: AppPopupVariant;
+    title: string;
+    message: string;
+    confirmId?: string | null;
+  }>({
+    open: false,
+    variant: 'info',
+    title: '',
+    message: '',
+    confirmId: null,
+  });
 
   // Time & Date
   const [timeState, setTimeState] = useState({
@@ -222,8 +236,21 @@ export default function DashboardPage() {
   }, [statsCycleOn]);
 
   // Approve action
+  const requestApprove = (id: string) => {
+    const app = applications.find((a) => a.id === id);
+    setPopup({
+      open: true,
+      variant: 'confirm',
+      title: 'Approve Membership?',
+      message: app
+        ? `Approve ${app.name}?\nWhatsApp approval message will open for ${app.mobile}.`
+        : 'Approve this membership application?\nWhatsApp approval message will open.',
+      confirmId: id,
+    });
+  };
+
   const handleApprove = async (id: string) => {
-    if (!confirm('✅ Approve membership application?')) return;
+    setPopup((p) => ({ ...p, open: false, confirmId: null }));
     try {
       const response = await apiFetch(`/api/admin/update/${id}`, {
         method: 'POST',
@@ -232,7 +259,13 @@ export default function DashboardPage() {
       });
       const result = await response.json();
       if (!result.success) {
-        alert('❌ Server error: ' + (result.message || 'Failed'));
+        setPopup({
+          open: true,
+          variant: 'error',
+          title: 'Approve Failed',
+          message: result.message || 'Unable to approve application.',
+          confirmId: null,
+        });
         return;
       }
       if (result.whatsapp) {
@@ -240,10 +273,22 @@ export default function DashboardPage() {
       }
       await loadRealData();
       await loadPendingApplications();
-      alert(t.approvedAlert);
+      setPopup({
+        open: true,
+        variant: 'success',
+        title: 'Approved',
+        message: t.approvedAlert,
+        confirmId: null,
+      });
     } catch (e) {
       console.error('Approval error:', e);
-      alert('✅ Approved locally! Refreshing list.');
+      setPopup({
+        open: true,
+        variant: 'error',
+        title: 'Network Error',
+        message: 'Could not approve. Please try again.',
+        confirmId: null,
+      });
       await loadPendingApplications();
     }
   };
@@ -632,7 +677,7 @@ export default function DashboardPage() {
                             <td className="text-center">
                               <button
                                 className="approve-btn-custom"
-                                onClick={() => handleApprove(app.id)}
+                                onClick={() => requestApprove(app.id)}
                               >
                                 <i className="fas fa-check-circle"></i>
                                 <span>{t.approve}</span>
@@ -649,6 +694,22 @@ export default function DashboardPage() {
           )}
         </main>
       </div>
+
+      <AppPopup
+        open={popup.open}
+        variant={popup.variant}
+        title={popup.title}
+        message={popup.message}
+        confirmLabel={popup.variant === 'confirm' ? 'Approve' : 'OK'}
+        onClose={() =>
+          setPopup((p) => ({ ...p, open: false, confirmId: null }))
+        }
+        onConfirm={
+          popup.confirmId
+            ? () => handleApprove(popup.confirmId as string)
+            : undefined
+        }
+      />
     </>
   );
 }

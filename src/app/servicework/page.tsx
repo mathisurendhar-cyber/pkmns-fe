@@ -1,687 +1,423 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
+import { requireAuth } from '@/lib/auth';
+import './servicework.css';
 
 type Tab = 'services' | 'providers';
+type ModalKind = 'category' | 'provider' | null;
 
 interface Category {
-  id: number;
+  id: string;
   name: string;
-  code: string;
-  description: string;
-  status: 'Active' | 'Inactive';
   providers: number;
 }
 
 interface Provider {
-  id: number;
+  id: string;
   name: string;
   phone: string;
-  email: string;
-  categoryId: number;
-  status: 'Active' | 'Inactive';
+  categoryId: string;
 }
 
-const initialCategories: Category[] = [
-  {
-    id: 1,
-    name: 'Police',
-    code: 'POL-001',
-    description: 'Public safety service',
-    status: 'Active',
-    providers: 3,
-  },
-  {
-    id: 2,
-    name: 'Healthcare',
-    code: 'HLT-002',
-    description: 'Medical assistance',
-    status: 'Active',
-    providers: 0,
-  },
-  {
-    id: 3,
-    name: 'Education',
-    code: 'EDU-003',
-    description: 'Education and learning',
-    status: 'Active',
-    providers: 0,
-  },
-];
+function asList(data: unknown, keys: string[]): Record<string, unknown>[] {
+  if (Array.isArray(data)) return data as Record<string, unknown>[];
+  if (data && typeof data === 'object') {
+    const obj = data as Record<string, unknown>;
+    for (const key of keys) {
+      if (Array.isArray(obj[key])) return obj[key] as Record<string, unknown>[];
+    }
+  }
+  return [];
+}
 
-const initialProviders: Provider[] = [
-  {
-    id: 1,
-    name: 'City Police Department',
-    phone: '+91 98765 43210',
-    email: 'police@example.com',
-    categoryId: 1,
-    status: 'Active',
-  },
-  {
-    id: 2,
-    name: 'Central Police Station',
-    phone: '+91 98765 12345',
-    email: 'central@example.com',
-    categoryId: 1,
-    status: 'Active',
-  },
-  {
-    id: 3,
-    name: 'District Police Office',
-    phone: '+91 98765 67890',
-    email: 'district@example.com',
-    categoryId: 1,
-    status: 'Active',
-  },
-];
+function mapProviders(rows: Record<string, unknown>[]): Provider[] {
+  return rows.map((item) => ({
+    id: String(item.id ?? ''),
+    name: String(item.name || item.full_name || item.member_name || 'Provider'),
+    phone: String(item.phone || item.mobile || item.mobile_number || ''),
+    categoryId: String(item.categoryId || item.category_id || item.category || ''),
+  }));
+}
+
+function mapCategories(
+  rows: Record<string, unknown>[],
+  providers: Provider[],
+): Category[] {
+  return rows.map((item) => {
+    const id = String(item.id ?? '');
+    const apiCount = Number(item.count ?? item.providers_count ?? 0);
+    const computed = providers.filter((p) => p.categoryId === id).length;
+    return {
+      id,
+      name: String(item.name || item.category || 'Service'),
+      providers: apiCount > 0 ? apiCount : computed,
+    };
+  });
+}
 
 export default function Page() {
-  const [categories, setCategories] =
-    useState<Category[]>(initialCategories);
-
-  const [providers, setProviders] =
-    useState<Provider[]>(initialProviders);
-
-  const [activeTab, setActiveTab] =
-    useState<Tab>('services');
-
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<Tab>('services');
   const [search, setSearch] = useState('');
-
-  const [categoryFilter, setCategoryFilter] =
-    useState('all');
-
-  const [modal, setModal] = useState<
-    'category' | 'provider' | null
-  >(null);
-
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [modal, setModal] = useState<ModalKind>(null);
   const [saving, setSaving] = useState(false);
-
-  const [categoryName, setCategoryName] =
-    useState('');
-
-  const [categoryDescription, setCategoryDescription] =
-    useState('');
-
-  const [providerName, setProviderName] =
-    useState('');
-
-  const [providerPhone, setProviderPhone] =
-    useState('');
-
-  const [providerEmail, setProviderEmail] =
-    useState('');
-
-  const [providerCategory, setProviderCategory] =
-    useState('');
-
+  const [categoryName, setCategoryName] = useState('');
+  const [providerName, setProviderName] = useState('');
+  const [providerPhone, setProviderPhone] = useState('');
+  const [providerCategory, setProviderCategory] = useState('');
   const [toast, setToast] = useState('');
+  const [toastTone, setToastTone] = useState<'ok' | 'err'>('ok');
 
-  const showToast = (message: string) => {
+  const showToast = useCallback((message: string, tone: 'ok' | 'err' = 'ok') => {
+    setToastTone(tone);
     setToast(message);
-
-    window.setTimeout(() => {
-      setToast('');
-    }, 3000);
-  };
+    window.setTimeout(() => setToast(''), 3200);
+  }, []);
 
   const resetModal = () => {
     setModal(null);
-
     setCategoryName('');
-    setCategoryDescription('');
-
     setProviderName('');
     setProviderPhone('');
-    setProviderEmail('');
     setProviderCategory('');
-
     setSaving(false);
   };
 
-  const openCategoryModal = () => {
-    setModal('category');
-  };
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [catRes, memRes] = await Promise.all([
+        apiFetch('/api/categories'),
+        apiFetch('/api/members'),
+      ]);
+      if (!catRes.ok || !memRes.ok) throw new Error('load failed');
 
-  const openProviderModal = () => {
-    if (categories.length === 0) {
-      showToast(
-        'Please create a service category first.',
+      const mappedProviders = mapProviders(
+        asList(await memRes.json(), ['members', 'providers', 'data']),
       );
+      const mappedCategories = mapCategories(
+        asList(await catRes.json(), ['categories', 'data']),
+        mappedProviders,
+      );
+      setProviders(mappedProviders);
+      setCategories(mappedCategories);
+    } catch {
+      setCategories([]);
+      setProviders([]);
+      showToast('Could not load service data. Showing empty workspace.', 'err');
+    } finally {
+      setLoading(false);
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    requireAuth();
+    void loadData();
+  }, [loadData]);
+
+  const openCategoryModal = () => setModal('category');
+
+  const openProviderModal = (categoryId?: string) => {
+    if (categories.length === 0) {
+      showToast('Please create a service category first.', 'err');
       return;
     }
-
-    setProviderCategory(
-      String(categories[0].id),
-    );
-
+    setProviderCategory(categoryId || categories[0].id);
     setModal('provider');
   };
 
-  const handleCreateCategory = () => {
-    if (!categoryName.trim()) {
-      showToast('Category name is required.');
-      return;
-    }
-
+  const handleCreateCategory = async () => {
+    const name = categoryName.trim();
+    if (!name) return showToast('Category name is required.', 'err');
     setSaving(true);
-
-    window.setTimeout(() => {
-      const nextNumber =
-        categories.length + 1;
-
-      const code =
-        `SRV-${String(nextNumber).padStart(3, '0')}`;
-
-      const newCategory: Category = {
-        id: Date.now(),
-        name: categoryName.trim(),
-        code,
-        description:
-          categoryDescription.trim() ||
-          'Service category',
-        status: 'Active',
-        providers: 0,
-      };
-
-      setCategories((current) => [
-        ...current,
-        newCategory,
-      ]);
-
-      setSaving(false);
-
+    try {
+      const res = await apiFetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.error) {
+        showToast(String(data?.error || 'Failed to create category.'), 'err');
+        return;
+      }
       resetModal();
-
-      showToast(
-        `${newCategory.name} category created successfully.`,
-      );
-    }, 500);
+      showToast(`${name} category created successfully.`);
+      await loadData();
+    } catch {
+      showToast('Failed to create category.', 'err');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleCreateProvider = () => {
-    if (!providerName.trim()) {
-      showToast('Provider name is required.');
-      return;
-    }
-
-    if (!providerPhone.trim()) {
-      showToast('Phone number is required.');
-      return;
-    }
-
-    if (!providerCategory) {
-      showToast('Please select a category.');
-      return;
-    }
+  const handleCreateProvider = async () => {
+    const name = providerName.trim();
+    const phone = providerPhone.trim();
+    if (!name) return showToast('Provider name is required.', 'err');
+    if (!phone) return showToast('Phone number is required.', 'err');
+    if (!providerCategory) return showToast('Please select a category.', 'err');
 
     setSaving(true);
-
-    window.setTimeout(() => {
-      const newProvider: Provider = {
-        id: Date.now(),
-        name: providerName.trim(),
-        phone: providerPhone.trim(),
-        email: providerEmail.trim(),
-        categoryId: Number(providerCategory),
-        status: 'Active',
-      };
-
-      setProviders((current) => [
-        ...current,
-        newProvider,
-      ]);
-
-      setCategories((current) =>
-        current.map((category) =>
-          category.id === Number(providerCategory)
-            ? {
-                ...category,
-                providers:
-                  category.providers + 1,
-              }
-            : category,
-        ),
-      );
-
-      setSaving(false);
-
+    try {
+      const res = await apiFetch('/api/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, category: providerCategory }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.error) {
+        showToast(String(data?.error || 'Failed to add provider.'), 'err');
+        return;
+      }
       resetModal();
-
-      showToast(
-        `${newProvider.name} added successfully.`,
-      );
-    }, 500);
+      showToast(`${name} added successfully.`);
+      await loadData();
+    } catch {
+      showToast('Failed to add provider.', 'err');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDeleteCategory = (
-    categoryId: number,
-  ) => {
-    const category = categories.find(
-      (item) => item.id === categoryId,
-    );
-
+  const handleDeleteCategory = async (categoryId: string) => {
+    const category = categories.find((c) => c.id === categoryId);
     if (!category) return;
-
-    if (category.providers > 0) {
-      showToast(
-        'Remove providers from this category first.',
-      );
+    if (
+      category.providers > 0 ||
+      providers.some((p) => p.categoryId === categoryId)
+    ) {
+      showToast('Remove providers from this category first.', 'err');
       return;
     }
-
-    const confirmed = window.confirm(
-      `Delete ${category.name}?`,
-    );
-
-    if (!confirmed) return;
-
-    setCategories((current) =>
-      current.filter(
-        (item) => item.id !== categoryId,
-      ),
-    );
-
-    showToast(
-      `${category.name} deleted successfully.`,
-    );
+    try {
+      const res = await apiFetch(
+        `/api/categories/${encodeURIComponent(categoryId)}`,
+        { method: 'DELETE' },
+      );
+      const data = res.status === 204 ? null : await res.json().catch(() => ({}));
+      if (!res.ok || data?.error) {
+        showToast(String(data?.error || 'Failed to delete category.'), 'err');
+        return;
+      }
+      showToast(`${category.name} deleted successfully.`);
+      await loadData();
+    } catch {
+      showToast('Failed to delete category.', 'err');
+    }
   };
 
-  const handleDeleteProvider = (
-    providerId: number,
-  ) => {
-    const provider = providers.find(
-      (item) => item.id === providerId,
-    );
-
+  const handleDeleteProvider = async (providerId: string) => {
+    const provider = providers.find((p) => p.id === providerId);
     if (!provider) return;
-
-    const confirmed = window.confirm(
-      `Delete ${provider.name}?`,
-    );
-
-    if (!confirmed) return;
-
-    setProviders((current) =>
-      current.filter(
-        (item) => item.id !== providerId,
-      ),
-    );
-
-    setCategories((current) =>
-      current.map((category) =>
-        category.id === provider.categoryId
-          ? {
-              ...category,
-              providers: Math.max(
-                0,
-                category.providers - 1,
-              ),
-            }
-          : category,
-      ),
-    );
-
-    showToast(
-      `${provider.name} deleted successfully.`,
-    );
+    try {
+      const res = await apiFetch(
+        `/api/members/${encodeURIComponent(providerId)}`,
+        { method: 'DELETE' },
+      );
+      const data = res.status === 204 ? null : await res.json().catch(() => ({}));
+      if (!res.ok || data?.error) {
+        showToast(String(data?.error || 'Failed to delete provider.'), 'err');
+        return;
+      }
+      showToast(`${provider.name} deleted successfully.`);
+      await loadData();
+    } catch {
+      showToast('Failed to delete provider.', 'err');
+    }
   };
 
   const totalProviders = providers.length;
-
-  const unassignedCategories =
-    categories.filter(
-      (category) => category.providers === 0,
-    ).length;
-
+  const unassigned = categories.filter((c) => c.providers === 0).length;
   const topCategory =
     categories.length > 0
-      ? [...categories].sort(
-          (a, b) => b.providers - a.providers,
-        )[0]
+      ? [...categories].sort((a, b) => b.providers - a.providers)[0]
       : null;
 
   const filteredCategories = useMemo(() => {
-    return categories.filter((category) => {
-      const matchesSearch =
-        category.name
-          .toLowerCase()
-          .includes(search.toLowerCase()) ||
-        category.code
-          .toLowerCase()
-          .includes(search.toLowerCase()) ||
-        category.description
-          .toLowerCase()
-          .includes(search.toLowerCase());
-
-      return matchesSearch;
-    });
+    const q = search.toLowerCase();
+    return categories.filter(
+      (c) => c.name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q),
+    );
   }, [categories, search]);
 
   const filteredProviders = useMemo(() => {
-    return providers.filter((provider) => {
-      const category = categories.find(
-        (item) => item.id === provider.categoryId,
-      );
-
-      const matchesSearch =
-        provider.name
-          .toLowerCase()
-          .includes(search.toLowerCase()) ||
-        provider.phone
-          .toLowerCase()
-          .includes(search.toLowerCase()) ||
-        provider.email
-          .toLowerCase()
-          .includes(search.toLowerCase());
-
-      const matchesCategory =
-        categoryFilter === 'all' ||
-        String(provider.categoryId) ===
-          categoryFilter;
-
-      return (
-        matchesSearch &&
-        matchesCategory &&
-        category
-      );
+    const q = search.toLowerCase();
+    return providers.filter((p) => {
+      const hit =
+        p.name.toLowerCase().includes(q) || p.phone.toLowerCase().includes(q);
+      const catOk = categoryFilter === 'all' || p.categoryId === categoryFilter;
+      return hit && catOk;
     });
-  }, [
-    providers,
-    categories,
-    search,
-    categoryFilter,
-  ]);
+  }, [providers, search, categoryFilter]);
+
+  const catName = (id: string) =>
+    categories.find((c) => c.id === id)?.name || 'Unassigned';
+
+  const healthWidth = categories.length
+    ? Math.max(25, 100 - (unassigned / categories.length) * 100)
+    : 0;
 
   return (
     <div className="service-shell">
-
-      {/* Background */}
       <div className="service-background">
         <div className="grid-overlay" />
         <div className="glow glow-purple" />
         <div className="glow glow-blue" />
       </div>
 
-      {/* Toast */}
       {toast && (
         <div className="service-toast">
-          <div className="toast-icon">✓</div>
-
+          <div className="toast-icon">{toastTone === 'ok' ? '✓' : '!'}</div>
           <div>
-            <strong>Success</strong>
+            <strong>{toastTone === 'ok' ? 'Success' : 'Notice'}</strong>
             <span>{toast}</span>
           </div>
-
-          <button
-            onClick={() => setToast('')}
-          >
+          <button type="button" onClick={() => setToast('')}>
             ×
           </button>
         </div>
       )}
 
-      {/* Modal */}
       {modal && (
         <div
           className="modal-overlay"
-          onMouseDown={(event) => {
-            if (
-              event.target ===
-              event.currentTarget
-            ) {
-              resetModal();
-            }
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) resetModal();
           }}
         >
           <div className="service-modal">
-
             <div className="modal-top-line" />
-
             <div className="modal-header">
-
               <div className="modal-title-area">
-
                 <div
                   className={
-                    modal === 'category'
-                      ? 'modal-icon purple'
-                      : 'modal-icon blue'
+                    modal === 'category' ? 'modal-icon purple' : 'modal-icon blue'
                   }
                 >
-                  {modal === 'category'
-                    ? '◆'
-                    : '♟'}
+                  {modal === 'category' ? '◆' : '♟'}
                 </div>
-
                 <div>
                   <span>
                     {modal === 'category'
                       ? 'SERVICE MANAGEMENT'
                       : 'PROVIDER MANAGEMENT'}
                   </span>
-
                   <h2>
                     {modal === 'category'
                       ? 'Create Service Category'
                       : 'Add Service Provider'}
                   </h2>
-
                   <p>
                     {modal === 'category'
                       ? 'Create a new service category for your network.'
-                      : 'Register a professional provider and assign a service.'}
+                      : 'Register a provider and assign a service category.'}
                   </p>
                 </div>
-
               </div>
-
-              <button
-                className="modal-close"
-                onClick={resetModal}
-              >
+              <button type="button" className="modal-close" onClick={resetModal}>
                 ×
               </button>
-
             </div>
 
             <div className="modal-body">
-
-              {modal === 'category' && (
+              {modal === 'category' ? (
                 <>
                   <div className="form-group">
                     <label>
-                      Category Name
-                      <span>*</span>
+                      Category Name<span>*</span>
                     </label>
-
                     <input
                       value={categoryName}
-                      onChange={(event) =>
-                        setCategoryName(
-                          event.target.value,
-                        )
-                      }
+                      onChange={(e) => setCategoryName(e.target.value)}
                       placeholder="e.g. Emergency Services"
                       autoFocus
                     />
                   </div>
-
-                  <div className="form-group">
-                    <label>
-                      Description
-                    </label>
-
-                    <textarea
-                      value={categoryDescription}
-                      onChange={(event) =>
-                        setCategoryDescription(
-                          event.target.value,
-                        )
-                      }
-                      placeholder="Describe this service category..."
-                      rows={4}
-                    />
-                  </div>
-
                   <div className="form-info">
                     <span>◆</span>
-
                     <div>
-                      <strong>
-                        New category
-                      </strong>
-
+                      <strong>New category</strong>
                       <small>
-                        Providers can be assigned
-                        after the category is created.
+                        Providers can be assigned after the category is created.
                       </small>
                     </div>
                   </div>
                 </>
-              )}
-
-              {modal === 'provider' && (
+              ) : (
                 <>
                   <div className="form-group">
                     <label>
-                      Provider Name
-                      <span>*</span>
+                      Provider Name<span>*</span>
                     </label>
-
                     <input
                       value={providerName}
-                      onChange={(event) =>
-                        setProviderName(
-                          event.target.value,
-                        )
-                      }
+                      onChange={(e) => setProviderName(e.target.value)}
                       placeholder="e.g. City Police Department"
                       autoFocus
                     />
                   </div>
-
-                  <div className="form-row">
-
-                    <div className="form-group">
-                      <label>
-                        Phone Number
-                        <span>*</span>
-                      </label>
-
-                      <input
-                        value={providerPhone}
-                        onChange={(event) =>
-                          setProviderPhone(
-                            event.target.value,
-                          )
-                        }
-                        placeholder="+91 98765 43210"
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>
-                        Email
-                      </label>
-
-                      <input
-                        type="email"
-                        value={providerEmail}
-                        onChange={(event) =>
-                          setProviderEmail(
-                            event.target.value,
-                          )
-                        }
-                        placeholder="provider@example.com"
-                      />
-                    </div>
-
-                  </div>
-
                   <div className="form-group">
                     <label>
-                      Service Category
-                      <span>*</span>
+                      Phone Number<span>*</span>
                     </label>
-
+                    <input
+                      value={providerPhone}
+                      onChange={(e) => setProviderPhone(e.target.value)}
+                      placeholder="+91 98765 43210"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>
+                      Service Category<span>*</span>
+                    </label>
                     <select
                       value={providerCategory}
-                      onChange={(event) =>
-                        setProviderCategory(
-                          event.target.value,
-                        )
-                      }
+                      onChange={(e) => setProviderCategory(e.target.value)}
                     >
-                      <option value="">
-                        Select service category
-                      </option>
-
-                      {categories.map(
-                        (category) => (
-                          <option
-                            key={category.id}
-                            value={category.id}
-                          >
-                            {category.name}
-                          </option>
-                        ),
-                      )}
+                      <option value="">Select service category</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
-
                   <div className="provider-preview">
-
                     <div className="preview-avatar">
-                      {providerName
-                        ? providerName
-                            .charAt(0)
-                            .toUpperCase()
-                        : 'P'}
+                      {providerName ? providerName.charAt(0).toUpperCase() : 'P'}
                     </div>
-
                     <div>
-                      <span>
-                        PROVIDER PREVIEW
-                      </span>
-
-                      <strong>
-                        {providerName ||
-                          'Provider name'}
-                      </strong>
-
+                      <span>PROVIDER PREVIEW</span>
+                      <strong>{providerName || 'Provider name'}</strong>
                       <small>
                         {providerCategory
-                          ? categories.find(
-                              (item) =>
-                                item.id ===
-                                Number(
-                                  providerCategory,
-                                ),
-                            )?.name ||
-                            'No category'
+                          ? catName(providerCategory)
                           : 'No category selected'}
                       </small>
                     </div>
-
                   </div>
                 </>
               )}
-
             </div>
 
             <div className="modal-footer">
-
               <button
+                type="button"
                 className="modal-cancel"
                 onClick={resetModal}
                 disabled={saving}
               >
                 Cancel
               </button>
-
               <button
+                type="button"
                 className={
                   modal === 'category'
                     ? 'modal-primary purple'
@@ -699,749 +435,397 @@ export default function Page() {
                     <span className="button-loader" />
                     Saving...
                   </>
+                ) : modal === 'category' ? (
+                  '◆ Create Category'
                 ) : (
-                  <>
-                    {modal === 'category'
-                      ? '◆ Create Category'
-                      : '♟ Add Provider'}
-                  </>
+                  '♟ Add Provider'
                 )}
               </button>
-
             </div>
-
           </div>
         </div>
       )}
 
       <main className="service-layout">
-
-        {/* Header */}
         <header className="service-header">
-
           <div className="service-brand">
-
-            <div className="service-logo">
-              ⚡
-            </div>
-
+            <div className="service-logo">⚡</div>
             <div>
-              <h1>
-                Service Operations
-              </h1>
-
-              <p>
-                Service category & provider
-                management
-              </p>
+              <h1>Service Operations</h1>
+              <p>Service category & provider management</p>
             </div>
-
           </div>
-
           <div className="header-actions">
-
             <div className="system-status">
               <span className="pulse-dot" />
-              All systems operational
+              {loading ? 'Loading workspace…' : 'All systems operational'}
             </div>
-
             <button
+              type="button"
               className="header-icon-button"
               onClick={() => {
-                setSearch('');
-                setCategoryFilter('all');
-                showToast(
-                  'Workspace refreshed.',
-                );
+                void loadData();
+                showToast('Workspace refreshed.');
               }}
             >
               ↻
             </button>
-
-            <Link
-              href="/dashboard"
-              className="dashboard-button"
-            >
+            <Link href="/dashboard" className="dashboard-button">
               ↗ Dashboard
             </Link>
-
           </div>
-
         </header>
 
-        {/* Hero */}
         <section className="service-hero">
-
           <div className="hero-left">
-
             <div className="hero-label">
               <span />
               SERVICE MANAGEMENT PLATFORM
             </div>
-
             <h2>
               One workspace.
               <br />
-              <strong>
-                Every service connected.
-              </strong>
+              <strong>Every service connected.</strong>
             </h2>
-
             <p>
-              Create service categories,
-              register providers and manage
-              your entire service network from
-              one professional workspace.
+              Create service categories, register providers and manage your
+              entire service network from one professional workspace.
             </p>
-
             <div className="hero-buttons">
-
               <button
+                type="button"
                 className="button-primary"
-                onClick={openProviderModal}
+                onClick={() => openProviderModal()}
               >
                 ♟ Add Provider
               </button>
-
               <button
+                type="button"
                 className="button-secondary"
                 onClick={openCategoryModal}
               >
                 ＋ Create Category
               </button>
-
             </div>
-
           </div>
-
           <div className="hero-right">
-
             <div className="network-card">
-
               <div className="network-card-header">
-
                 <div>
-                  <span>
-                    NETWORK HEALTH
-                  </span>
-
-                  <strong>
-                    {unassignedCategories === 0
-                      ? 'Excellent'
-                      : 'Good'}
-                  </strong>
+                  <span>NETWORK HEALTH</span>
+                  <strong>{unassigned === 0 ? 'Excellent' : 'Good'}</strong>
                 </div>
-
-                <div className="health-icon">
-                  ✦
-                </div>
-
+                <div className="health-icon">✦</div>
               </div>
-
               <div className="health-meter">
-                <span
-                  style={{
-                    width: `${
-                      categories.length
-                        ? Math.max(
-                            25,
-                            100 -
-                              (unassignedCategories /
-                                categories.length) *
-                                100,
-                          )
-                        : 0
-                    }%`,
-                  }}
-                />
+                <span style={{ width: `${healthWidth}%` }} />
               </div>
-
               <div className="network-metrics">
-
                 <div>
-                  <small>
-                    Categories
-                  </small>
-
-                  <strong>
-                    {categories.length}
-                  </strong>
+                  <small>Categories</small>
+                  <strong>{categories.length}</strong>
                 </div>
-
                 <div>
-                  <small>
-                    Providers
-                  </small>
-
-                  <strong>
-                    {totalProviders}
-                  </strong>
+                  <small>Providers</small>
+                  <strong>{totalProviders}</strong>
                 </div>
-
                 <div>
-                  <small>
-                    Unassigned
-                  </small>
-
-                  <strong>
-                    {unassignedCategories}
-                  </strong>
+                  <small>Unassigned</small>
+                  <strong>{unassigned}</strong>
                 </div>
-
               </div>
-
               <div className="network-footer">
                 <i>●</i>
-                Live workspace synchronized
+                {loading ? 'Syncing workspace…' : 'Live workspace synchronized'}
               </div>
-
             </div>
-
           </div>
-
         </section>
 
-        {/* KPI */}
         <section className="kpi-grid">
-
-          <div className="kpi-card purple">
-
-            <div className="kpi-icon">
-              ◆
+          {[
+            {
+              cls: 'purple',
+              icon: '◆',
+              label: 'Total Categories',
+              value: categories.length,
+              note: 'Active service categories',
+            },
+            {
+              cls: 'blue',
+              icon: '♟',
+              label: 'Total Providers',
+              value: totalProviders,
+              note: 'Registered professionals',
+            },
+            {
+              cls: 'green',
+              icon: '↗',
+              label: 'Top Category',
+              value: topCategory?.name || '—',
+              note: topCategory
+                ? `${topCategory.providers} providers`
+                : 'No providers',
+            },
+            {
+              cls: 'orange',
+              icon: '!',
+              label: 'Needs Attention',
+              value: unassigned,
+              note: 'Categories without providers',
+            },
+          ].map((kpi) => (
+            <div key={kpi.label} className={`kpi-card ${kpi.cls}`}>
+              <div className="kpi-icon">{kpi.icon}</div>
+              <div className="kpi-content">
+                <span>{kpi.label}</span>
+                <strong>{kpi.value}</strong>
+                <small>{kpi.note}</small>
+              </div>
+              <div className="kpi-decoration">{kpi.icon}</div>
             </div>
-
-            <div className="kpi-content">
-              <span>
-                Total Categories
-              </span>
-
-              <strong>
-                {categories.length}
-              </strong>
-
-              <small>
-                Active service categories
-              </small>
-            </div>
-
-            <div className="kpi-decoration">
-              ◆
-            </div>
-
-          </div>
-
-          <div className="kpi-card blue">
-
-            <div className="kpi-icon">
-              ♟
-            </div>
-
-            <div className="kpi-content">
-              <span>
-                Total Providers
-              </span>
-
-              <strong>
-                {totalProviders}
-              </strong>
-
-              <small>
-                Registered professionals
-              </small>
-            </div>
-
-            <div className="kpi-decoration">
-              ♟
-            </div>
-
-          </div>
-
-          <div className="kpi-card green">
-
-            <div className="kpi-icon">
-              ↗
-            </div>
-
-            <div className="kpi-content">
-              <span>
-                Top Category
-              </span>
-
-              <strong>
-                {topCategory?.name || '—'}
-              </strong>
-
-              <small>
-                {topCategory
-                  ? `${topCategory.providers} providers`
-                  : 'No providers'}
-              </small>
-            </div>
-
-            <div className="kpi-decoration">
-              ↗
-            </div>
-
-          </div>
-
-          <div className="kpi-card orange">
-
-            <div className="kpi-icon">
-              !
-            </div>
-
-            <div className="kpi-content">
-              <span>
-                Needs Attention
-              </span>
-
-              <strong>
-                {unassignedCategories}
-              </strong>
-
-              <small>
-                Categories without providers
-              </small>
-            </div>
-
-            <div className="kpi-decoration">
-              !
-            </div>
-
-          </div>
-
+          ))}
         </section>
 
-        {/* Workspace */}
         <section className="workspace">
-
           <div className="workspace-top">
-
             <div>
-              <span className="workspace-label">
-                MANAGEMENT CONSOLE
-              </span>
-
-              <h2>
-                Service Workspace
-              </h2>
-
-              <p>
-                Create, organize and manage
-                services and providers.
-              </p>
+              <span className="workspace-label">MANAGEMENT CONSOLE</span>
+              <h2>Service Workspace</h2>
+              <p>Create, organize and manage services and providers.</p>
             </div>
-
             <div className="workspace-actions">
-
               <button
+                type="button"
                 className="small-action"
                 onClick={() => {
                   setSearch('');
                   setCategoryFilter('all');
-
-                  showToast(
-                    'Filters cleared.',
-                  );
+                  showToast('Filters cleared.');
                 }}
               >
                 ⟳ Reset
               </button>
-
               <button
+                type="button"
                 className="small-action primary"
                 onClick={openCategoryModal}
               >
                 ＋ Add Service
               </button>
-
             </div>
-
           </div>
 
-          {/* Tabs */}
           <div className="workspace-tabs">
-
             <button
-              className={
-                activeTab === 'services'
-                  ? 'active'
-                  : ''
-              }
-              onClick={() =>
-                setActiveTab('services')
-              }
+              type="button"
+              className={activeTab === 'services' ? 'active' : ''}
+              onClick={() => setActiveTab('services')}
             >
-              ◆ Services
-              <span>
-                {categories.length}
-              </span>
+              ◆ Services<span>{categories.length}</span>
             </button>
-
             <button
-              className={
-                activeTab === 'providers'
-                  ? 'active'
-                  : ''
-              }
-              onClick={() =>
-                setActiveTab('providers')
-              }
+              type="button"
+              className={activeTab === 'providers' ? 'active' : ''}
+              onClick={() => setActiveTab('providers')}
             >
-              ♟ Providers
-              <span>
-                {totalProviders}
-              </span>
+              ♟ Providers<span>{totalProviders}</span>
             </button>
-
           </div>
 
-          {/* SERVICES */}
           {activeTab === 'services' && (
             <div className="management-card">
-
               <div className="table-toolbar">
-
                 <div>
-                  <span className="toolbar-label">
-                    SERVICE CATEGORIES
-                  </span>
-
-                  <h3>
-                    All Services
-                  </h3>
+                  <span className="toolbar-label">SERVICE CATEGORIES</span>
+                  <h3>All Services</h3>
                 </div>
-
                 <div className="toolbar-controls">
-
                   <div className="search-input">
                     <span>⌕</span>
-
                     <input
                       value={search}
-                      onChange={(event) =>
-                        setSearch(
-                          event.target.value,
-                        )
-                      }
+                      onChange={(e) => setSearch(e.target.value)}
                       placeholder="Search categories..."
                     />
                   </div>
-
                   <button
+                    type="button"
                     className="toolbar-add"
                     onClick={openCategoryModal}
                   >
                     ＋ Add Category
                   </button>
-
                 </div>
-
               </div>
-
-              <div className="advanced-table-wrapper">
-
+              <div className="advanced-table-wrapper table-wrap">
                 <table className="advanced-table">
-
                   <thead>
                     <tr>
                       <th>Service</th>
-                      <th>Code</th>
+                      <th>ID</th>
                       <th>Providers</th>
                       <th>Status</th>
                       <th>Coverage</th>
                       <th>Action</th>
                     </tr>
                   </thead>
-
                   <tbody>
-
-                    {filteredCategories.length ===
-                      0 && (
+                    {!loading && filteredCategories.length === 0 && (
                       <tr>
-                        <td
-                          colSpan={6}
-                          className="empty-table"
-                        >
+                        <td colSpan={6} className="empty-table">
                           <div>
-                            <span>
-                              ◆
-                            </span>
-
-                            <strong>
-                              No service categories
-                            </strong>
-
+                            <span>◆</span>
+                            <strong>No service categories</strong>
                             <small>
-                              Create your first
-                              category to get
-                              started.
+                              Create your first category to get started.
                             </small>
-
-                            <button
-                              onClick={
-                                openCategoryModal
-                              }
-                            >
+                            <button type="button" onClick={openCategoryModal}>
                               ＋ Create Category
                             </button>
                           </div>
                         </td>
                       </tr>
                     )}
-
-                    {filteredCategories.map(
-                      (category) => (
-                        <tr
-                          key={category.id}
-                        >
-
-                          <td>
-                            <div className="entity-cell">
-
-                              <div className="entity-avatar purple">
-                                {category.name
-                                  .charAt(0)
-                                  .toUpperCase()}
-                              </div>
-
-                              <div>
-                                <strong>
-                                  {category.name}
-                                </strong>
-
-                                <small>
-                                  {
-                                    category.description
-                                  }
-                                </small>
-                              </div>
-
+                    {filteredCategories.map((category) => (
+                      <tr key={category.id}>
+                        <td>
+                          <div className="entity-cell">
+                            <div className="entity-avatar purple">
+                              {category.name.charAt(0).toUpperCase()}
                             </div>
-                          </td>
-
-                          <td>
-                            <span className="code-chip">
-                              {category.code}
-                            </span>
-                          </td>
-
-                          <td>
-                            <span className="number-chip">
-                              {category.providers}{' '}
-                              providers
-                            </span>
-                          </td>
-
-                          <td>
-                            <span className="active-status">
-                              <span />
-                              {category.status}
-                            </span>
-                          </td>
-
-                          <td>
-                            <div className="mini-progress">
-
-                              <div>
-                                <span
-                                  style={{
-                                    width: `${Math.min(
-                                      100,
-                                      category.providers *
-                                        25,
-                                    )}%`,
-                                  }}
-                                />
-                              </div>
-
-                              <small>
-                                {Math.min(
-                                  100,
-                                  category.providers *
-                                    25,
-                                )}
-                                %
-                              </small>
-
+                            <div>
+                              <strong>{category.name}</strong>
+                              <small>Service category</small>
                             </div>
-                          </td>
-
-                          <td>
-                            <div className="row-buttons">
-
-                              <button
-                                title="View providers"
-                                onClick={() => {
-                                  setActiveTab(
-                                    'providers',
-                                  );
-
-                                  setCategoryFilter(
-                                    String(
-                                      category.id,
-                                    ),
-                                  );
+                          </div>
+                        </td>
+                        <td>
+                          <span className="code-chip">{category.id}</span>
+                        </td>
+                        <td>
+                          <span className="number-chip">
+                            {category.providers} providers
+                          </span>
+                        </td>
+                        <td>
+                          <span className="active-status">
+                            <span />
+                            Active
+                          </span>
+                        </td>
+                        <td>
+                          <div className="mini-progress">
+                            <div>
+                              <span
+                                style={{
+                                  width: `${Math.min(100, category.providers * 25)}%`,
                                 }}
-                              >
-                                ↗
-                              </button>
-
-                              <button
-                                title="Add provider"
-                                onClick={() => {
-                                  setProviderCategory(
-                                    String(
-                                      category.id,
-                                    ),
-                                  );
-
-                                  setModal(
-                                    'provider',
-                                  );
-                                }}
-                              >
-                                ♟
-                              </button>
-
-                              <button
-                                className="danger"
-                                title="Delete category"
-                                onClick={() =>
-                                  handleDeleteCategory(
-                                    category.id,
-                                  )
-                                }
-                              >
-                                ×
-                              </button>
-
+                              />
                             </div>
-                          </td>
-
-                        </tr>
-                      ),
-                    )}
-
+                            <small>
+                              {Math.min(100, category.providers * 25)}%
+                            </small>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="row-buttons">
+                            <button
+                              type="button"
+                              title="View providers"
+                              onClick={() => {
+                                setActiveTab('providers');
+                                setCategoryFilter(category.id);
+                              }}
+                            >
+                              ↗
+                            </button>
+                            <button
+                              type="button"
+                              title="Add provider"
+                              onClick={() => openProviderModal(category.id)}
+                            >
+                              ♟
+                            </button>
+                            <button
+                              type="button"
+                              className="danger"
+                              title="Delete category"
+                              onClick={() =>
+                                void handleDeleteCategory(category.id)
+                              }
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
-
                 </table>
-
               </div>
-
             </div>
           )}
 
-          {/* PROVIDERS */}
           {activeTab === 'providers' && (
             <div className="management-card">
-
               <div className="table-toolbar">
-
                 <div>
-                  <span className="toolbar-label">
-                    SERVICE PROVIDERS
-                  </span>
-
-                  <h3>
-                    Provider Network
-                  </h3>
+                  <span className="toolbar-label">SERVICE PROVIDERS</span>
+                  <h3>Provider Network</h3>
                 </div>
-
                 <div className="toolbar-controls">
-
                   <div className="search-input">
                     <span>⌕</span>
-
                     <input
                       value={search}
-                      onChange={(event) =>
-                        setSearch(
-                          event.target.value,
-                        )
-                      }
+                      onChange={(e) => setSearch(e.target.value)}
                       placeholder="Search providers..."
                     />
                   </div>
-
                   <select
                     className="filter-select"
                     value={categoryFilter}
-                    onChange={(event) =>
-                      setCategoryFilter(
-                        event.target.value,
-                      )
-                    }
+                    onChange={(e) => setCategoryFilter(e.target.value)}
                   >
-                    <option value="all">
-                      All Categories
-                    </option>
-
-                    {categories.map(
-                      (category) => (
-                        <option
-                          key={category.id}
-                          value={category.id}
-                        >
-                          {category.name}
-                        </option>
-                      ),
-                    )}
+                    <option value="all">All Categories</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
                   </select>
-
                   <button
+                    type="button"
                     className="toolbar-add blue"
-                    onClick={openProviderModal}
+                    onClick={() => openProviderModal()}
                   >
                     ＋ Add Provider
                   </button>
-
                 </div>
-
               </div>
-
-              <div className="advanced-table-wrapper">
-
+              <div className="advanced-table-wrapper table-wrap">
                 <table className="advanced-table">
-
                   <thead>
                     <tr>
                       <th>Provider</th>
                       <th>Phone</th>
                       <th>Category</th>
                       <th>Status</th>
-                      <th>Email</th>
                       <th>Action</th>
                     </tr>
                   </thead>
-
                   <tbody>
-
-                    {filteredProviders.length ===
-                      0 && (
+                    {!loading && filteredProviders.length === 0 && (
                       <tr>
-                        <td
-                          colSpan={6}
-                          className="empty-table"
-                        >
+                        <td colSpan={5} className="empty-table">
                           <div>
-                            <span>
-                              ♟
-                            </span>
-
-                            <strong>
-                              No providers found
-                            </strong>
-
-                            <small>
-                              Add your first
-                              service provider.
-                            </small>
-
+                            <span>♟</span>
+                            <strong>No providers found</strong>
+                            <small>Add your first service provider.</small>
                             <button
-                              onClick={
-                                openProviderModal
-                              }
+                              type="button"
+                              onClick={() => openProviderModal()}
                             >
                               ＋ Add Provider
                             </button>
@@ -1449,130 +833,63 @@ export default function Page() {
                         </td>
                       </tr>
                     )}
-
-                    {filteredProviders.map(
-                      (provider) => {
-                        const category =
-                          categories.find(
-                            (item) =>
-                              item.id ===
-                              provider.categoryId,
-                          );
-
-                        return (
-                          <tr
-                            key={provider.id}
-                          >
-
-                            <td>
-                              <div className="entity-cell">
-
-                                <div className="entity-avatar blue">
-                                  {provider.name
-                                    .charAt(0)
-                                    .toUpperCase()}
-                                </div>
-
-                                <div>
-                                  <strong>
-                                    {provider.name}
-                                  </strong>
-
-                                  <small>
-                                    Professional
-                                    provider
-                                  </small>
-                                </div>
-
-                              </div>
-                            </td>
-
-                            <td>
-                              <span className="plain-value">
-                                {provider.phone}
-                              </span>
-                            </td>
-
-                            <td>
-                              <span className="category-chip">
-                                {category?.name ||
-                                  'Unassigned'}
-                              </span>
-                            </td>
-
-                            <td>
-                              <span className="active-status">
-                                <span />
-                                {provider.status}
-                              </span>
-                            </td>
-
-                            <td>
-                              <span className="plain-value">
-                                {provider.email ||
-                                  '—'}
-                              </span>
-                            </td>
-
-                            <td>
-                              <div className="row-buttons">
-
-                                <button
-                                  title="View"
-                                  onClick={() =>
-                                    showToast(
-                                      provider.name,
-                                    )
-                                  }
-                                >
-                                  ↗
-                                </button>
-
-                                <button
-                                  title="Delete"
-                                  className="danger"
-                                  onClick={() =>
-                                    handleDeleteProvider(
-                                      provider.id,
-                                    )
-                                  }
-                                >
-                                  ×
-                                </button>
-
-                              </div>
-                            </td>
-
-                          </tr>
-                        );
-                      },
-                    )}
-
+                    {filteredProviders.map((provider) => (
+                      <tr key={provider.id}>
+                        <td>
+                          <div className="entity-cell">
+                            <div className="entity-avatar blue">
+                              {provider.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <strong>{provider.name}</strong>
+                              <small>Professional provider</small>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span className="plain-value">{provider.phone}</span>
+                        </td>
+                        <td>
+                          <span className="category-chip">
+                            {catName(provider.categoryId)}
+                          </span>
+                        </td>
+                        <td>
+                          <span className="active-status">
+                            <span />
+                            Active
+                          </span>
+                        </td>
+                        <td>
+                          <div className="row-buttons">
+                            <button
+                              type="button"
+                              title="Delete"
+                              className="danger"
+                              onClick={() =>
+                                void handleDeleteProvider(provider.id)
+                              }
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
-
                 </table>
-
               </div>
-
             </div>
           )}
-
         </section>
 
-        {/* Footer */}
         <footer className="service-footer">
-
           <div>
             <i>◆</i>
             Service Management Platform
           </div>
-
-          <div>
-            Secure • Reliable • Connected
-          </div>
-
+          <div>Secure • Reliable • Connected</div>
         </footer>
-
       </main>
     </div>
   );

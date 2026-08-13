@@ -1,6 +1,7 @@
 'use client';
 
 import { apiFetch } from '@/lib/api';
+import AppPopup from '@/components/AppPopup';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { useEffect, useState } from 'react';
 import { requireAuth } from '@/lib/auth';
@@ -32,6 +33,9 @@ export default function MembershipApplicationsPage() {
     title: '',
     message: '',
   });
+  const [confirmApproveId, setConfirmApproveId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     requireAuth();
@@ -94,7 +98,7 @@ export default function MembershipApplicationsPage() {
 
       const data = await res.json().catch(() => null);
 
-      if (!res.ok) {
+      if (!res.ok || !data?.success) {
         throw new Error(
           data?.message || 'Status update failed',
         );
@@ -103,10 +107,13 @@ export default function MembershipApplicationsPage() {
       await loadApplications();
 
       if (status === 'approved') {
+        if (data.whatsapp) {
+          window.open(data.whatsapp, '_blank', 'noopener,noreferrer');
+        }
         showNotice(
           'success',
           'Application Approved',
-          'The membership application has been approved successfully.',
+          'Approved successfully. WhatsApp opened with the approval message for this member.',
         );
       } else {
         showNotice(
@@ -392,10 +399,7 @@ export default function MembershipApplicationsPage() {
                           type="button"
                           className="btn btn-approve"
                           onClick={() =>
-                            updateStatus(
-                              app.id,
-                              'approved',
-                            )
+                            setConfirmApproveId(app.id)
                           }
                         >
                           <span>✓</span>
@@ -517,10 +521,7 @@ export default function MembershipApplicationsPage() {
                           type="button"
                           className="btn btn-approve"
                           onClick={() =>
-                            updateStatus(
-                              app.id,
-                              'approved',
-                            )
+                            setConfirmApproveId(app.id)
                           }
                         >
                           ✓ Approve
@@ -606,6 +607,29 @@ export default function MembershipApplicationsPage() {
 
           </div>
         )}
+
+        <AppPopup
+          open={!!confirmApproveId}
+          variant="confirm"
+          title="Approve Membership?"
+          message={
+            (() => {
+              const app = applications.find(
+                (a) => a.id === confirmApproveId,
+              );
+              return app
+                ? `Approve ${app.name}?\nWhatsApp will open with an approval message for ${app.mobile}.`
+                : 'Approve this application and open WhatsApp?';
+            })()
+          }
+          confirmLabel="Approve & WhatsApp"
+          onClose={() => setConfirmApproveId(null)}
+          onConfirm={() => {
+            const id = confirmApproveId;
+            setConfirmApproveId(null);
+            if (id) void updateStatus(id, 'approved');
+          }}
+        />
 
       </div>
     </AdminLayout>

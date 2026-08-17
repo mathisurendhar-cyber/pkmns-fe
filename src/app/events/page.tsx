@@ -1,5 +1,6 @@
 'use client';
 
+import SiteNavbar from '@/components/layout/SiteNavbar';
 import { useEffect, useMemo, useState } from 'react';
 import './events.css';
 
@@ -100,9 +101,6 @@ function getMainDate(group: EventGroup) {
 }
 
 export default function EventsPage() {
-  const [menuOpen, setMenuOpen] =
-    useState(false);
-
   const [events, setEvents] =
     useState<EventGroup[]>([]);
 
@@ -289,78 +287,7 @@ export default function EventsPage() {
           HEADER
           ===================================== */}
 
-      <header className="events-header">
-        <div className="header-inner">
-
-          <a
-            href="/"
-            className="brand-link"
-          >
-            <div className="brand-logo-wrap">
-              <img
-                src="/img/logo.png"
-                alt="Sri Ambal Nagar"
-              />
-            </div>
-
-            <div className="brand-details">
-              <div className="brand-name">
-                Sri AmbalNagar
-              </div>
-
-              <div className="brand-subtitle">
-                MAKKAL NALVAZHU SANGAM
-              </div>
-            </div>
-          </a>
-
-          <nav
-            className={
-              menuOpen
-                ? 'desktop-nav mobile-open'
-                : 'desktop-nav'
-            }
-          >
-            <a href="/">Home</a>
-
-            <a href="/about">
-              About Us
-            </a>
-
-            <a href="/members">
-              Members
-            </a>
-
-            <a
-              href="/events"
-              className="nav-active"
-            >
-              Events
-            </a>
-
-            <a href="/contact">
-              Contact Us
-            </a>
-
-            <a href="/login">
-              Login
-            </a>
-          </nav>
-
-          <button
-            type="button"
-            className="mobile-menu-btn"
-            onClick={() =>
-              setMenuOpen(
-                (value) => !value,
-              )
-            }
-          >
-            {menuOpen ? '×' : '☰'}
-          </button>
-
-        </div>
-      </header>
+      <SiteNavbar />
 
 
       {/* =====================================

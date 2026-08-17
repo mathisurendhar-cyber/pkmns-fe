@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { getCurrentUser } from '@/lib/auth';
 import './site-navbar.css';
 
 const LINKS = [
@@ -23,6 +24,18 @@ function isActive(pathname: string, href: string) {
 export default function SiteNavbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState('/img/avatar1.png');
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    setUserName(user.name || user.username || null);
+
+    const photo = (user as { avatar?: string }).avatar?.trim();
+    if (photo) setAvatar(photo);
+  }, []);
 
   useEffect(() => {
     setOpen(false);
@@ -40,13 +53,26 @@ export default function SiteNavbar() {
       <div className="site-navbar-inner">
         <Link href="/" className="site-navbar-brand">
           <span className="site-navbar-logo">
-            <img src="/img/logo.png" alt="Ambal Nagar logo" />
+            <img
+              src="/img/logo.png"
+              alt="Sri Ambal Nagar logo"
+              onError={(e) => {
+                e.currentTarget.src = '/img/profile-default.png';
+              }}
+            />
           </span>
           <span className="site-navbar-title">
-            <strong>Sri Ambal Nagar</strong>
+            <strong>Sri AmbalNagar</strong>
             <small>Makkal Nalvazhu Sangam</small>
           </span>
         </Link>
+
+        {userName && (
+          <div className="site-navbar-user">
+            <img src={avatar} alt="User avatar" />
+            <span>{userName}</span>
+          </div>
+        )}
 
         <button
           type="button"

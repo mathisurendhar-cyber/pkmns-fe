@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import SiteNavbar from '@/components/layout/SiteNavbar';
 import { useEffect, useState } from 'react';
 import './members.css';
 
@@ -15,7 +15,6 @@ type Member = {
 };
 
 export default function MembersPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState('');
   const [selectedMember, setSelectedMember] =
@@ -104,129 +103,7 @@ export default function MembersPage() {
           HEADER
       ================================================= */}
 
-      <header className="members-header">
-
-        <div className="header-container">
-
-          <Link
-            href="/"
-            className="brand-flex"
-          >
-            <img
-              src="/img/logo.png"
-              alt="Sri AmbalNagar"
-              onError={(e) => {
-                (
-                  e.currentTarget
-                ).src =
-                  '/img/profile-default.png';
-              }}
-            />
-
-            <div className="brand-text">
-              <strong>
-                Sri AmbalNagar
-              </strong>
-
-              <span>
-                MAKKAL NALVAZHU SANGAM
-              </span>
-            </div>
-          </Link>
-
-          <nav className="main-nav">
-            <ul
-              className={
-                menuOpen
-                  ? 'show'
-                  : ''
-              }
-            >
-              <li>
-                <Link
-                  href="/"
-                  onClick={() =>
-                    setMenuOpen(false)
-                  }
-                >
-                  Home
-                </Link>
-              </li>
-
-              <li>
-                <Link
-                  href="/about"
-                  onClick={() =>
-                    setMenuOpen(false)
-                  }
-                >
-                  About Us
-                </Link>
-              </li>
-
-              <li>
-                <Link
-                  href="/members"
-                  className="active"
-                  onClick={() =>
-                    setMenuOpen(false)
-                  }
-                >
-                  Members
-                </Link>
-              </li>
-
-              <li>
-                <Link
-                  href="/events"
-                  onClick={() =>
-                    setMenuOpen(false)
-                  }
-                >
-                  Events
-                </Link>
-              </li>
-
-              <li>
-                <Link
-                  href="/contact"
-                  onClick={() =>
-                    setMenuOpen(false)
-                  }
-                >
-                  Contact Us
-                </Link>
-              </li>
-
-              <li>
-                <Link
-                  href="/login"
-                  onClick={() =>
-                    setMenuOpen(false)
-                  }
-                >
-                  Login
-                </Link>
-              </li>
-            </ul>
-          </nav>
-
-          <button
-            type="button"
-            className="menu-toggle"
-            onClick={() =>
-              setMenuOpen(
-                (value) => !value,
-              )
-            }
-            aria-label="Toggle menu"
-          >
-            {menuOpen ? '×' : '☰'}
-          </button>
-
-        </div>
-
-      </header>
+      <SiteNavbar />
 
       {/* =================================================
           MAIN

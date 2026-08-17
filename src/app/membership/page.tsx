@@ -6,11 +6,18 @@ import SiteNavbar from '@/components/layout/SiteNavbar';
 import { FormEvent, useEffect, useState } from 'react';
 import './membership.css';
 
+const UPI_ID = 'makkalnalvazhvusangam@tmb';
+
+const UPI_LINK = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(
+  'Sri Ambal Nagar Makkal Nalvazhvu Sangam',
+)}&am=200&cu=INR&tn=${encodeURIComponent('Annual Membership 2026')}`;
+
 export default function MembershipPage() {
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
   const [refId, setRefId] = useState('');
   const [qr, setQr] = useState('/img/qr-payment.jpg');
+  const [qrOpen, setQrOpen] = useState(false);
   const [sending, setSending] = useState(false);
 
   const [popup, setPopup] = useState<{
@@ -39,6 +46,26 @@ export default function MembershipPage() {
       })
       .catch(() => {});
   }, []);
+
+  /* =====================================================
+     QR PREVIEW
+  ===================================================== */
+
+  useEffect(() => {
+    if (!qrOpen) return;
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setQrOpen(false);
+    };
+
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [qrOpen]);
 
   /* =====================================================
      POPUP - SAME LOGIC
@@ -143,28 +170,6 @@ export default function MembershipPage() {
 
           <div className="orange-noise" />
 
-          <div className="brand-top">
-
-            <div className="brand-mark">
-              <img
-                src="/img/logo.png"
-                alt="Sri Ambal Nagar"
-              />
-            </div>
-
-            <div className="brand-copy">
-              <strong>
-                SRI AMBAL NAGAR
-              </strong>
-
-              <span>
-                WELFARE ASSOCIATION
-              </span>
-            </div>
-
-          </div>
-
-
           <div className="brand-content">
 
             <div className="mini-line">
@@ -187,29 +192,50 @@ export default function MembershipPage() {
             </p>
 
 
-            <div className="price-block">
+            <div className="price-card">
 
-              <div className="price-label">
-                ANNUAL CONTRIBUTION
+              <div className="price-card-top">
+
+                <span className="price-card-label">
+                  ANNUAL CONTRIBUTION
+                </span>
+
+                <span className="price-card-badge">
+                  2026 · ONE YEAR
+                </span>
+
               </div>
 
-              <div className="price-number">
-                <small>₹</small>
-                200
+              <div className="price-card-figure">
+
+                <span className="price-currency">
+                  ₹
+                </span>
+
+                <span className="price-value">
+                  200
+                </span>
+
+                <span className="price-period">
+                  / year
+                </span>
+
               </div>
 
-              <div className="price-duration">
-                <span className="tick">✓</span>
+              <div className="price-card-notes">
 
-                <div>
-                  <strong>
-                    ONE YEAR MEMBERSHIP
-                  </strong>
+                <span>
+                  ✓ One year validity
+                </span>
 
-                  <span>
-                    Simple · Secure · Community focused
-                  </span>
-                </div>
+                <span>
+                  ✓ Secure UPI payment
+                </span>
+
+                <span>
+                  ✓ Community welfare
+                </span>
+
               </div>
 
             </div>
@@ -295,7 +321,12 @@ export default function MembershipPage() {
 
               <div className="payment-main">
 
-                <div className="qr-area">
+                <button
+                  type="button"
+                  className="qr-area"
+                  onClick={() => setQrOpen(true)}
+                  aria-label="Preview QR code"
+                >
 
                   <div className="qr-corner qr-tl" />
                   <div className="qr-corner qr-tr" />
@@ -307,7 +338,11 @@ export default function MembershipPage() {
                     alt="GPay QR"
                   />
 
-                </div>
+                  <span className="qr-zoom">
+                    ⤢
+                  </span>
+
+                </button>
 
 
                 <div className="payment-details">
@@ -324,6 +359,26 @@ export default function MembershipPage() {
                     Scan the QR code and complete
                     your ₹200 annual membership payment.
                   </p>
+
+                  <div className="payment-actions">
+
+                    <button
+                      type="button"
+                      className="qr-preview-btn"
+                      onClick={() => setQrOpen(true)}
+                    >
+                      <span>⤢</span>
+                      PREVIEW QR
+                    </button>
+
+                    <a
+                      className="qr-pay-btn"
+                      href={UPI_LINK}
+                    >
+                      PAY ₹200
+                    </a>
+
+                  </div>
 
                   <div className="secure-line">
                     <span>✓</span>
@@ -542,6 +597,81 @@ export default function MembershipPage() {
         </section>
 
       </main>
+
+
+      {/* =================================================
+          QR PREVIEW
+      ================================================= */}
+
+      {qrOpen && (
+        <div
+          className="qr-preview"
+          role="dialog"
+          aria-modal="true"
+          aria-label="UPI QR preview"
+          onClick={() => setQrOpen(false)}
+        >
+          <div
+            className="qr-preview-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+
+            <button
+              type="button"
+              className="qr-preview-close"
+              aria-label="Close preview"
+              onClick={() => setQrOpen(false)}
+            >
+              ×
+            </button>
+
+            <span className="qr-preview-kicker">
+              SCAN TO PAY
+            </span>
+
+            <h4>
+              ₹200 · Annual Membership
+            </h4>
+
+            <div className="qr-preview-frame">
+              <img
+                src={qr}
+                alt="UPI QR code"
+              />
+            </div>
+
+            <div className="qr-preview-upi">
+              <span>UPI ID</span>
+              <strong>{UPI_ID}</strong>
+            </div>
+
+            <div className="qr-preview-actions">
+
+              <a
+                className="qr-preview-pay"
+                href={UPI_LINK}
+              >
+                PAY ₹200
+              </a>
+
+              <a
+                className="qr-preview-download"
+                href={qr}
+                download="ambal-nagar-upi-qr.png"
+              >
+                DOWNLOAD QR
+              </a>
+
+            </div>
+
+            <p className="qr-preview-note">
+              After payment, copy the reference ID and
+              fill the form below.
+            </p>
+
+          </div>
+        </div>
+      )}
 
 
       <AppPopup

@@ -48,7 +48,7 @@
 ===================================================== */
 
 .membership-screen {
-  min-height: calc(100vh - 72px);
+  min-height: calc(100vh - 74px);
 
   display: grid;
 
@@ -65,7 +65,7 @@
 .membership-brand-zone {
   position: relative;
 
-  min-height: calc(100vh - 72px);
+  min-height: calc(100vh - 74px);
 
   display: flex;
 
@@ -152,74 +152,6 @@
 
 
 /* =====================================================
-   BRAND
-===================================================== */
-
-.brand-top {
-  position: relative;
-
-  z-index: 3;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 13px;
-}
-
-.brand-mark {
-  width: 53px;
-  height: 53px;
-
-  display: grid;
-
-  place-items: center;
-
-  border:
-    1px solid
-    rgba(255,255,255,0.55);
-
-  border-radius: 50%;
-
-  background:
-    rgba(255,255,255,0.1);
-}
-
-.brand-mark img {
-  width: 44px;
-  height: 44px;
-
-  object-fit: contain;
-
-  border-radius: 50%;
-}
-
-.brand-copy strong {
-  display: block;
-
-  font-size: 10px;
-
-  font-weight: 900;
-
-  letter-spacing: 2px;
-}
-
-.brand-copy span {
-  display: block;
-
-  margin-top: 4px;
-
-  font-size: 7px;
-
-  font-weight: 700;
-
-  letter-spacing: 1.8px;
-
-  opacity: 0.7;
-}
-
-
-/* =====================================================
    BRAND CONTENT
 ===================================================== */
 
@@ -232,7 +164,7 @@
 
   margin-bottom: auto;
 
-  padding-top: 55px;
+  padding-top: 10px;
 }
 
 .mini-line {
@@ -310,101 +242,139 @@
    PRICE
 ===================================================== */
 
-.price-block {
-  margin-top: 35px;
+.price-card {
+  position: relative;
+
+  z-index: 3;
+
+  max-width: 340px;
+
+  margin-top: 32px;
+
+  padding: 18px 20px 16px;
+
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 18px;
+
+  background: rgba(255, 255, 255, 0.13);
+
+  box-shadow: 0 18px 34px rgba(70, 22, 4, 0.22);
+
+  backdrop-filter: blur(4px);
 }
 
-.price-label {
-  font-size: 7px;
+.price-card-top {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 10px;
+}
+
+.price-card-label {
+  font-size: 8px;
 
   font-weight: 900;
 
   letter-spacing: 2px;
 
-  opacity: 0.7;
+  opacity: 0.85;
 }
 
-.price-number {
+.price-card-badge {
+  padding: 5px 10px;
+
+  border-radius: 999px;
+
+  background: var(--dark);
+
+  color: #ffffff;
+
+  font-size: 8px;
+
+  font-weight: 900;
+
+  letter-spacing: 1.4px;
+
+  white-space: nowrap;
+}
+
+.price-card-figure {
   display: flex;
 
   align-items: flex-start;
 
-  margin-top: 3px;
+  gap: 4px;
 
+  margin-top: 10px;
+}
+
+.price-currency {
+  margin-top: 10px;
+
+  font-size: 26px;
+
+  font-weight: 900;
+
+  line-height: 1;
+}
+
+.price-value {
   font-family:
     Arial,
     sans-serif;
 
-  font-size:
-    clamp(72px, 7vw, 105px);
+  font-size: clamp(60px, 6vw, 86px);
 
-  line-height: 0.83;
+  line-height: 0.85;
 
   font-weight: 900;
 
-  letter-spacing: -6px;
+  letter-spacing: -4px;
 }
 
-.price-number small {
-  margin-top: 12px;
+.price-period {
+  align-self: flex-end;
 
-  margin-right: 3px;
+  padding-bottom: 8px;
 
-  font-size: 25px;
+  font-size: 11px;
 
-  letter-spacing: 0;
+  font-weight: 700;
+
+  opacity: 0.8;
 }
 
-
-/* =====================================================
-   DURATION
-===================================================== */
-
-.price-duration {
+.price-card-notes {
   display: flex;
 
-  align-items: center;
+  flex-wrap: wrap;
 
-  gap: 12px;
+  gap: 6px;
 
-  margin-top: 24px;
+  margin-top: 14px;
+
+  padding-top: 13px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.24);
 }
 
-.tick {
-  width: 31px;
-  height: 31px;
+.price-card-notes span {
+  padding: 5px 9px;
 
-  display: grid;
+  border-radius: 999px;
 
-  place-items: center;
+  background: rgba(255, 255, 255, 0.16);
 
-  border-radius: 50%;
+  font-size: 8px;
 
-  background: var(--dark);
+  font-weight: 800;
 
-  color: white;
+  letter-spacing: 0.8px;
 
-  font-size: 13px;
-
-  font-weight: 900;
-}
-
-.price-duration strong {
-  display: block;
-
-  font-size: 9px;
-
-  letter-spacing: 1px;
-}
-
-.price-duration span:not(.tick) {
-  display: block;
-
-  margin-top: 4px;
-
-  font-size: 7px;
-
-  opacity: 0.65;
+  white-space: nowrap;
 }
 
 
@@ -458,7 +428,7 @@
 ===================================================== */
 
 .membership-form-zone {
-  min-height: calc(100vh - 72px);
+  min-height: calc(100vh - 74px);
 
   background: white;
 
@@ -650,6 +620,46 @@
   display: grid;
 
   place-items: center;
+
+  padding: 0;
+
+  border: 0;
+
+  background: transparent;
+
+  cursor: pointer;
+
+  transition: transform 0.2s ease;
+}
+
+.qr-area:hover {
+  transform: translateY(-2px);
+}
+
+.qr-zoom {
+  position: absolute;
+
+  right: -6px;
+  bottom: -6px;
+
+  width: 26px;
+  height: 26px;
+
+  display: grid;
+
+  place-items: center;
+
+  border-radius: 50%;
+
+  background: var(--orange);
+
+  color: #ffffff;
+
+  font-size: 12px;
+
+  font-weight: 900;
+
+  box-shadow: 0 6px 14px rgba(232, 97, 30, 0.35);
 }
 
 .qr-area img {
@@ -767,6 +777,307 @@
   border-radius: 50%;
 
   background: #dcfce7;
+}
+
+
+/* =====================================================
+   PAYMENT ACTIONS
+===================================================== */
+
+.payment-actions {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 8px;
+
+  margin-top: 13px;
+}
+
+.qr-preview-btn,
+.qr-pay-btn {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 6px;
+
+  padding: 9px 14px;
+
+  border: 1px solid var(--orange);
+  border-radius: 999px;
+
+  font-size: 9px;
+
+  font-weight: 900;
+
+  letter-spacing: 1.2px;
+
+  text-decoration: none;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.qr-preview-btn {
+  background: #ffffff;
+
+  color: var(--orange);
+}
+
+.qr-preview-btn:hover {
+  background: var(--orange-soft);
+
+  transform: translateY(-1px);
+}
+
+.qr-pay-btn {
+  background:
+    linear-gradient(
+      135deg,
+      var(--orange),
+      var(--orange-dark)
+    );
+
+  color: #ffffff;
+}
+
+.qr-pay-btn:hover {
+  transform: translateY(-1px);
+}
+
+
+/* =====================================================
+   QR PREVIEW MODAL
+===================================================== */
+
+.qr-preview {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 6000;
+
+  display: grid;
+
+  place-items: center;
+
+  padding: 20px;
+
+  background: rgba(16, 24, 45, 0.62);
+
+  backdrop-filter: blur(3px);
+
+  animation: qr-fade 0.18s ease;
+}
+
+.qr-preview-card {
+  position: relative;
+
+  width: 100%;
+  max-width: 330px;
+
+  padding: 26px 22px 20px;
+
+  border-radius: 22px;
+
+  background: #ffffff;
+
+  text-align: center;
+
+  box-shadow: 0 26px 60px rgba(16, 24, 45, 0.35);
+
+  animation: qr-pop 0.2s ease;
+}
+
+.qr-preview-close {
+  position: absolute;
+
+  top: 12px;
+  right: 12px;
+
+  width: 30px;
+  height: 30px;
+
+  display: grid;
+
+  place-items: center;
+
+  border: 0;
+  border-radius: 50%;
+
+  background: var(--orange-soft);
+
+  color: var(--orange);
+
+  font-size: 19px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.qr-preview-kicker {
+  display: block;
+
+  color: var(--orange);
+
+  font-size: 8px;
+
+  font-weight: 900;
+
+  letter-spacing: 2px;
+}
+
+.qr-preview-card h4 {
+  margin: 6px 0 0;
+
+  color: var(--ink);
+
+  font-size: 16px;
+
+  font-weight: 900;
+}
+
+.qr-preview-frame {
+  margin: 16px auto 0;
+
+  width: 100%;
+  max-width: 240px;
+
+  padding: 14px;
+
+  border: 1px solid var(--line);
+  border-radius: 16px;
+
+  background: #ffffff;
+}
+
+.qr-preview-frame img {
+  width: 100%;
+
+  aspect-ratio: 1 / 1;
+
+  object-fit: contain;
+
+  display: block;
+}
+
+.qr-preview-upi {
+  margin-top: 14px;
+
+  padding: 10px;
+
+  border-radius: 12px;
+
+  background: var(--orange-soft);
+}
+
+.qr-preview-upi span {
+  display: block;
+
+  color: var(--orange);
+
+  font-size: 7px;
+
+  font-weight: 900;
+
+  letter-spacing: 1.6px;
+}
+
+.qr-preview-upi strong {
+  display: block;
+
+  margin-top: 3px;
+
+  color: var(--ink);
+
+  font-family: monospace;
+
+  font-size: 12px;
+
+  word-break: break-all;
+}
+
+.qr-preview-actions {
+  display: flex;
+
+  gap: 8px;
+
+  margin-top: 14px;
+}
+
+.qr-preview-pay,
+.qr-preview-download {
+  flex: 1;
+
+  padding: 11px 10px;
+
+  border-radius: 999px;
+
+  font-size: 9px;
+
+  font-weight: 900;
+
+  letter-spacing: 1.2px;
+
+  text-decoration: none;
+}
+
+.qr-preview-pay {
+  background:
+    linear-gradient(
+      135deg,
+      var(--orange),
+      var(--orange-dark)
+    );
+
+  color: #ffffff;
+}
+
+.qr-preview-download {
+  border: 1px solid var(--line);
+
+  background: #ffffff;
+
+  color: var(--ink);
+}
+
+.qr-preview-note {
+  margin: 12px 0 0;
+
+  color: var(--grey);
+
+  font-size: 8px;
+
+  line-height: 1.6;
+}
+
+@keyframes qr-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes qr-pop {
+  from {
+    opacity: 0;
+
+    transform: translateY(10px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+
+    transform: translateY(0) scale(1);
+  }
 }
 
 
@@ -1177,7 +1488,7 @@
   }
 
   .brand-content {
-    padding-top: 70px;
+    padding-top: 10px;
   }
 
   .brand-content h1 {
@@ -1186,8 +1497,12 @@
     letter-spacing: -3px;
   }
 
-  .price-number {
-    font-size: 78px;
+  .price-card {
+    max-width: 100%;
+  }
+
+  .price-value {
+    font-size: 70px;
   }
 
   .membership-form-zone {
@@ -1233,20 +1548,6 @@
       30px;
   }
 
-  .brand-mark {
-    width: 47px;
-    height: 47px;
-  }
-
-  .brand-mark img {
-    width: 39px;
-    height: 39px;
-  }
-
-  .brand-copy strong {
-    font-size: 9px;
-  }
-
   .brand-content h1 {
     font-size: 42px;
 
@@ -1257,12 +1558,16 @@
     font-size: 11px;
   }
 
-  .price-number {
-    font-size: 68px;
+  .price-card {
+    padding: 16px 16px 14px;
   }
 
-  .price-number small {
-    font-size: 21px;
+  .price-value {
+    font-size: 62px;
+  }
+
+  .price-currency {
+    font-size: 22px;
   }
 
   .form-zone-inner {
@@ -1284,6 +1589,17 @@
 
   .payment-details {
     max-width: 100%;
+  }
+
+  .payment-actions {
+    width: 100%;
+  }
+
+  .qr-preview-btn,
+  .qr-pay-btn {
+    flex: 1;
+
+    justify-content: center;
   }
 
   .editorial-field {
